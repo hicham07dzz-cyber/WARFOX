@@ -146,13 +146,13 @@ func _build_hud() -> void:
 	zone_status_label.add_theme_font_size_override("font_size", 14)
 	root.add_child(zone_status_label)
 
-    match_stats_label = Label.new()
-    match_stats_label.text = "KILLS 0  |  BOTS 0"
-    match_stats_label.position = Vector2(25, 96)
-    match_stats_label.size = Vector2(250, 24)
-    match_stats_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.28))
-    match_stats_label.add_theme_font_size_override("font_size", 15)
-    root.add_child(match_stats_label)
+	match_stats_label = Label.new()
+	match_stats_label.text = "KILLS 0  |  BOTS 0"
+	match_stats_label.position = Vector2(25, 96)
+	match_stats_label.size = Vector2(250, 24)
+	match_stats_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.28))
+	match_stats_label.add_theme_font_size_override("font_size", 15)
+	root.add_child(match_stats_label)
 
 
 	var mode := Label.new()
@@ -268,15 +268,14 @@ func _build_hud() -> void:
 func _process(_delta: float) -> void:
 	if player != null:
 		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse, heal_pulse, parachute_pulse, reload_pulse)
-
-        if match_stats_label != null:
-            world := player.get_parent()
-            var active_bots := 0
-            if world != null:
-                for bot in world.get_nodes_in_group("warfox_bots"):
-                    if bot.visible and bot.health > 0:
-                        active_bots += 1
-            match_stats_label.text = "KILLS " + str(player.kills) + "  |  BOTS " + str(active_bots)
+		if match_stats_label != null:
+			var world := player.get_parent()
+			var active_bots := 0
+			if world != null:
+				for bot in world.get_nodes_in_group("warfox_bots"):
+					if bot.visible and bot.health > 0:
+						active_bots += 1
+			match_stats_label.text = "KILLS " + str(player.kills) + "  |  BOTS " + str(active_bots)
 		if flight_hint != null:
 			flight_hint.visible = player.parachute_deployed
 		if health_bar != null:
@@ -290,10 +289,10 @@ func _process(_delta: float) -> void:
 			medkit_button.text = "MEDKIT x" + str(player.medkits)
 			medkit_button.disabled = player.medkits <= 0 or player.health >= player.MAX_HEALTH or player.healing
 		if zone_status_label != null:
-			var world := player.get_parent()
-			if world != null:
-				var elapsed := float(world.get("safe_zone_elapsed"))
-				var radius := float(world.get("safe_zone_radius"))
+			var zone_world := player.get_parent()
+			if zone_world != null:
+				var elapsed := float(zone_world.get("safe_zone_elapsed"))
+				var radius := float(zone_world.get("safe_zone_radius"))
 				var remaining := maxi(0, int(30.0 - elapsed)) if elapsed < 30.0 else 0
 				var distance := Vector2(player.global_position.x, player.global_position.z).length()
 				if distance > radius:
