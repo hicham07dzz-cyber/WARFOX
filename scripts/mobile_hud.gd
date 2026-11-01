@@ -142,6 +142,7 @@ func _build_hud() -> void:
 
 	reload_button = Button.new()
 	reload_button.text = "RELOAD"
+	reload_button.name = "HUD_Reload"
 	reload_button.size = Vector2(92, 48)
 	reload_button.anchor_left = 1.0
 	reload_button.anchor_top = 1.0
@@ -199,6 +200,7 @@ func _build_hud() -> void:
 
 	var jump := Button.new()
 	jump.text = "JUMP"
+	jump.name = "HUD_Jump"
 	jump.size = Vector2(100, 68)
 	jump.anchor_left = 1.0
 	jump.anchor_top = 1.0
@@ -212,6 +214,7 @@ func _build_hud() -> void:
 
 	var fire := Button.new()
 	fire.text = "FIRE"
+	fire.name = "HUD_Fire"
 	fire.size = Vector2(104, 68)
 	fire.anchor_left = 1.0
 	fire.anchor_top = 1.0
@@ -225,6 +228,7 @@ func _build_hud() -> void:
 
 	medkit_button = Button.new()
 	medkit_button.text = "MEDKIT x3"
+	medkit_button.name = "HUD_Medkit"
 	medkit_button.size = Vector2(104, 52)
 	medkit_button.anchor_left = 1.0
 	medkit_button.anchor_top = 1.0
@@ -238,6 +242,7 @@ func _build_hud() -> void:
 
 	var chute := Button.new()
 	chute.text = "CHUTE"
+	chute.name = "HUD_Parachute"
 	chute.size = Vector2(92, 48)
 	chute.anchor_left = 1.0
 	chute.anchor_top = 1.0
@@ -250,7 +255,7 @@ func _build_hud() -> void:
 	root.add_child(chute)
 
 	var radar := MiniRadar.new()
-	radar.name = "WARFOX_Mini_Map"
+	radar.name = "HUD_Mini_Map"
 	radar.player = player
 	radar.position = Vector2(-174, 92)
 	radar.anchor_left = 1.0
@@ -261,6 +266,7 @@ func _build_hud() -> void:
 
 	var sprint := Button.new()
 	sprint.text = "RUN"
+	sprint.name = "HUD_Sprint"
 	sprint.size = Vector2(88, 54)
 	sprint.anchor_left = 1.0
 	sprint.anchor_top = 1.0
@@ -274,6 +280,7 @@ func _build_hud() -> void:
 
 	var crouch := Button.new()
 	crouch.text = "CROUCH"
+	crouch.name = "HUD_Crouch"
 	crouch.size = Vector2(92, 50)
 	crouch.anchor_left = 1.0
 	crouch.anchor_top = 1.0
@@ -286,6 +293,7 @@ func _build_hud() -> void:
 	root.add_child(crouch)
 
 	var joystick := TouchStick.new()
+	joystick.name = "HUD_Movement_Stick"
 	joystick.position = Vector2(34, -194)
 	joystick.anchor_top = 1.0
 	joystick.anchor_bottom = 1.0
@@ -302,6 +310,7 @@ func _build_armory_panel(root: Control) -> void:
 		account_manager = world.get_node_or_null("WARFOX_Account")
 	var armory_button := Button.new()
 	armory_button.text = "ARMORY"
+	armory_button.name = "HUD_Armory"
 	armory_button.position = Vector2(24, 128)
 	armory_button.size = Vector2(112, 42)
 	armory_button.add_theme_font_size_override("font_size", 14)
@@ -581,6 +590,7 @@ class MiniRadar extends Control:
 func _build_pause_panel(root: Control) -> void:
 	pause_button = Button.new()
 	pause_button.text = "Ⅱ"
+	pause_button.name = "HUD_Pause"
 	pause_button.tooltip_text = "PAUSE"
 	pause_button.size = Vector2(54, 46)
 	pause_button.anchor_left = 0.5
@@ -695,7 +705,7 @@ func _build_hud_editor(root: Control) -> void:
 	hud_save_button.text = "SAVE HUD"
 	hud_save_button.position = Vector2(148, 176)
 	hud_save_button.size = Vector2(104, 40)
-	_style_button(save_button, Color(0.12, 0.36, 0.25))
+	_style_button(hud_save_button, Color(0.12, 0.36, 0.25))
 	hud_save_button.visible = false
 	hud_save_button.name = "HUD_Save_Layout"
 	hud_save_button.pressed.connect(_save_hud_layout)
@@ -705,7 +715,7 @@ func _build_hud_editor(root: Control) -> void:
 	hud_reset_button.text = "RESET"
 	hud_reset_button.position = Vector2(260, 176)
 	hud_reset_button.size = Vector2(82, 40)
-	_style_button(reset_button, Color(0.35, 0.16, 0.10))
+	_style_button(hud_reset_button, Color(0.35, 0.16, 0.10))
 	hud_reset_button.visible = false
 	hud_reset_button.name = "HUD_Reset_Layout"
 	hud_reset_button.pressed.connect(_reset_hud_layout)
@@ -759,11 +769,9 @@ func _on_movable_control_input(event: InputEvent, control: Control) -> void:
 func _toggle_hud_edit() -> void:
 	hud_edit_mode = not hud_edit_mode
 	hud_edit_hint.visible = hud_edit_mode
-	var save_button := get_node_or_null("Control/HUD_Save_Layout")
-	var reset_button := get_node_or_null("Control/HUD_Reset_Layout")
-	if save_button != null:
+	if hud_save_button != null:
 		hud_save_button.visible = hud_edit_mode
-	if reset_button != null:
+	if hud_reset_button != null:
 		hud_reset_button.visible = hud_edit_mode
 	hud_edit_button.text = "DONE" if hud_edit_mode else "HUD"
 	if not hud_edit_mode:
@@ -786,21 +794,17 @@ func _save_hud_layout() -> void:
 		hud_edit_hint.visible = false
 	if hud_edit_button != null:
 		hud_edit_button.text = "HUD"
-	for node in get_children():
-		if node is Control:
-			var save_button := node.find_child("HUD_Save_Layout", true, false)
-			var reset_button := node.find_child("HUD_Reset_Layout", true, false)
-			if save_button != null:
-				hud_save_button.visible = false
-			if reset_button != null:
-				hud_reset_button.visible = false
+	if hud_save_button != null:
+		hud_save_button.visible = false
+	if hud_reset_button != null:
+		hud_reset_button.visible = false
 
 func _load_hud_layout() -> void:
 	var error := hud_layout.load("user://warfox_hud_layout.cfg")
 	if error != OK:
 		return
 	for control in hud_movable_controls:
-		var data: Variant = hud_layout.get_value("controls", str(control.get_instance_id()), {})
+		var data: Variant = hud_layout.get_value("controls", control.name, {})
 		if data is Dictionary:
 			control.position = data.get("position", control.position)
 			control.anchor_left = data.get("anchor_left", control.anchor_left)
@@ -817,4 +821,8 @@ func _reset_hud_layout() -> void:
 		control.anchor_bottom = control.get_meta("hud_default_anchor_bottom", control.anchor_bottom)
 	hud_layout.clear()
 	hud_layout.save("user://warfox_hud_layout.cfg")
+	if hud_save_button != null:
+		hud_save_button.visible = false
+	if hud_reset_button != null:
+		hud_reset_button.visible = false
 
