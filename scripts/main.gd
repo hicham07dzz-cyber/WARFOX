@@ -1,20 +1,32 @@
 extends Node3D
 
-# WARFOX first playable foundation: a generated island map preview.
-# All geometry is built from Godot primitives so the project needs no paid assets.
-
 const GRID_SIZE := 100
 const CELL_SIZE := 12.0
 const ISLAND_RADIUS := 570.0
-const WATER_LEVEL := 0.0
 
 func _ready() -> void:
+	_setup_input()
 	_build_environment()
-	_build_island()
+	var terrain := _build_island()
 	_build_water()
 	_build_landmarks()
-	_build_preview_camera()
-	_build_title()
+	_spawn_player(terrain)
+	_build_hud()
+
+func _setup_input() -> void:
+	_add_key("move_forward", KEY_W)
+	_add_key("move_back", KEY_S)
+	_add_key("move_left", KEY_A)
+	_add_key("move_right", KEY_D)
+	_add_key("jump", KEY_SPACE)
+	_add_key("sprint", KEY_SHIFT)
+
+func _add_key(action: String, key: Key) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	var event := InputEventKey.new()
+	event.physical_keycode = key
+	InputMap.action_add_event(action, event)
 
 func _build_environment() -> void:
 	var world := WorldEnvironment.new()
@@ -32,9 +44,8 @@ func _build_environment() -> void:
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	world.environment = environment
 	add_child(world)
-
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-48.0, -32.0, 0.0)
+	sun.rotation_degrees = Vector3(-48, -32, 0)
 	sun.light_energy = 1.25
 	sun.shadow_enabled = true
 	add_child(sun)
@@ -44,10 +55,9 @@ func _height_at(x: float, z: float) -> float:
 	var edge := clampf(1.0 - distance / ISLAND_RADIUS, 0.0, 1.0)
 	var hills := sin(x * 0.012) * 17.0 + cos(z * 0.015) * 13.0
 	var ridges := sin((x + z) * 0.006) * 24.0
-	var central_mass := pow(edge, 0.62) * 92.0
-	return maxf(-9.0, central_mass + hills * edge + ridges * edge - 8.0)
+	return maxf(-9.0, pow(edge, 0.62) * 92.0 + hills * edge + ridges * edge - 8.0)
 
-func _build_island() -> void:
+func _build_island() -> MeshInstance3D:
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var half := GRID_SIZE * CELL_SIZE * 0.5
@@ -57,12 +67,10 @@ func _build_island() -> void:
 			var x1 := x0 + CELL_SIZE
 			var z0 := float(iz) * CELL_SIZE - half
 			var z1 := z0 + CELL_SIZE
-			var center := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
-			if center.length() > ISLAND_RADIUS:
+			if Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5).length() > ISLAND_RADIUS:
 				continue
-			# Upward-facing triangle winding for the island surface.
-			_add_terrain_triangle(surface, Vector3(x0, _height_at(x0, z0), z0), Vector3(x0, _height_at(x0, z1), z1), Vector3(x1, _height_at(x1, z0), z0))
-			_add_terrain_triangle(surface, Vector3(x1, _height_at(x1, z0), z0), Vector3(x0, _height_at(x0, z1), z1), Vector3(x1, _height_at(x1, z1), z1))
+			_add_triangle(surface, Vector3(x0, _height_at(x0, z0), z0), Vector3(x0, _height_at(x0, z1), z1), Vector3(x1, _height_at(x1, z0), z0))
+			_add_triangle(surface, Vector3(x1, _height_at(x1, z0), z0), Vector3(x0, _height_at(x0, z1), z1), Vector3(x1, _height_at(x1, z1), z1))
 	surface.generate_normals()
 	var mesh_instance := MeshInstance3D.new()
 	mesh_instance.name = "WARFOX_Island_Terrain"
@@ -73,8 +81,15 @@ func _build_island() -> void:
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mesh_instance.material_override = material
 	add_child(mesh_instance)
+	var ground := StaticBody3D.new()
+	ground.name = "IslandCollision"
+	var collision := CollisionShape3D.new()
+	collision.shape = mesh_instance.mesh.create_trimesh_shape()
+	ground.add_child(collision)
+	add_child(ground)
+	return mesh_instance
 
-func _add_terrain_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
+func _add_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
 	for point in [a, b, c]:
 		var color := Color(0.22, 0.34, 0.20)
 		if point.y > 52.0:
@@ -86,55 +101,58 @@ func _add_terrain_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vect
 
 func _build_water() -> void:
 	var water := MeshInstance3D.new()
-	water.name = "Ocean"
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(1800.0, 1800.0)
+	plane.size = Vector2(1800, 1800)
 	water.mesh = plane
-	water.position.y = WATER_LEVEL - 1.0
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.025, 0.16, 0.23)
-	material.metallic = 0.28
-	material.roughness = 0.24
-	water.material_override = material
+	water.position.y = -1.0
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.025, 0.16, 0.23)
+	mat.metallic = 0.28
+	mat.roughness = 0.24
+	water.material_override = mat
 	add_child(water)
 
-func _add_landmark(label: String, position: Vector3, size: Vector3, color: Color) -> void:
-	var building := MeshInstance3D.new()
-	building.name = label
+func _add_building(label: String, x: float, z: float, size: Vector3, color: Color) -> void:
+	var body := StaticBody3D.new()
+	body.name = label
+	var mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = size
-	building.mesh = box
-	building.position = position + Vector3(0.0, size.y * 0.5, 0.0)
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.roughness = 0.82
-	building.material_override = material
-	add_child(building)
+	mesh.mesh = box
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = 0.82
+	mesh.material_override = mat
+	mesh.position.y = size.y * 0.5
+	body.add_child(mesh)
+	var shape := CollisionShape3D.new()
+	var box_shape := BoxShape3D.new()
+	box_shape.size = size
+	shape.shape = box_shape
+	shape.position.y = size.y * 0.5
+	body.add_child(shape)
+	body.position = Vector3(x, _height_at(x, z), z)
+	add_child(body)
 
 func _build_landmarks() -> void:
-	# Initial named regions; detailed layouts and original assets come in later stages.
-	_add_landmark("Central_Command_City", Vector3(0, _height_at(0, 0), 0), Vector3(100, 34, 90), Color(0.24, 0.29, 0.32))
-	_add_landmark("Air_Defense_Base", Vector3(-235, _height_at(-235, -80), -80), Vector3(90, 20, 75), Color(0.27, 0.30, 0.29))
-	_add_landmark("Airport_Hangar", Vector3(245, _height_at(245, 115), 115), Vector3(110, 16, 55), Color(0.36, 0.37, 0.35))
-	_add_landmark("Industrial_Zone", Vector3(60, _height_at(60, 300), 300), Vector3(105, 23, 80), Color(0.34, 0.29, 0.23))
-	_add_landmark("Coastal_Village", Vector3(-330, _height_at(-330, 210), 210), Vector3(65, 12, 60), Color(0.49, 0.40, 0.28))
+	_add_building("Central_Command_City", 0, 0, Vector3(100, 34, 90), Color(0.24, 0.29, 0.32))
+	_add_building("Air_Defense_Base", -235, -80, Vector3(90, 20, 75), Color(0.27, 0.30, 0.29))
+	_add_building("Airport_Hangar", 245, 115, Vector3(110, 16, 55), Color(0.36, 0.37, 0.35))
+	_add_building("Industrial_Zone", 60, 300, Vector3(105, 23, 80), Color(0.34, 0.29, 0.23))
+	_add_building("Coastal_Village", -330, 210, Vector3(65, 12, 60), Color(0.49, 0.40, 0.28))
 
-func _build_preview_camera() -> void:
-	var camera := Camera3D.new()
-	camera.name = "MapPreviewCamera"
-	camera.position = Vector3(1050.0, 1000.0, 1050.0)
-	camera.look_at(Vector3(0.0, 25.0, 0.0), Vector3.UP)
-	camera.current = true
-	camera.fov = 48.0
-	add_child(camera)
+func _spawn_player(_terrain: MeshInstance3D) -> void:
+	var player_script = load("res://scripts/player_controller.gd")
+	var player := CharacterBody3D.new()
+	player.name = "WARFOX_Player"
+	player.set_script(player_script)
+	player.position = Vector3(0, _height_at(0, 0) + 3.0, 30)
+	add_child(player)
+	set_meta("player", player)
 
-func _build_title() -> void:
-	var label := Label3D.new()
-	label.name = "WARFOX_Title"
-	label.text = "WARFOX  |  ISLAND MAP PROTOTYPE"
-	label.font_size = 48
-	label.pixel_size = 0.012
-	label.modulate = Color(1.0, 0.43, 0.08)
-	label.position = Vector3(0.0, 175.0, 0.0)
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(label)
+func _build_hud() -> void:
+	var hud_script = load("res://scripts/mobile_hud.gd")
+	var hud := CanvasLayer.new()
+	hud.set_script(hud_script)
+	add_child(hud)
+	hud.player = get_meta("player")
