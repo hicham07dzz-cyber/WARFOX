@@ -158,6 +158,7 @@ func _build_visual() -> void:
 	var canopy_mesh := SphereMesh.new()
 	canopy_mesh.radius = 1.0
 	canopy_mesh.height = 0.8
+	canopy_mesh.is_hemisphere = true
 	canopy_mesh.radial_segments = 24
 	canopy_mesh.rings = 12
 	canopy.mesh = canopy_mesh
@@ -197,7 +198,7 @@ func start_healing() -> void:
 		medkit_cross.visible = true
 
 func deploy_parachute() -> void:
-	if is_on_floor() or parachute_deployed or is_knocked_out:
+	if is_on_floor() or velocity.y >= 0.0 or parachute_deployed or is_knocked_out:
 		return
 	parachute_deployed = true
 	parachute_visual.visible = true
