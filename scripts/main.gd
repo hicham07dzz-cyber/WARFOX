@@ -10,6 +10,7 @@ var match_player: WarfoxPlayer
 var safe_zone_visual: MeshInstance3D
 var safe_zone_elapsed := 0.0
 var safe_zone_damage_clock := 0.0
+var safe_zone_bot_damage_clock := 0.0
 var safe_zone_radius := 520.0
 var safe_zone_last_visual_radius := 520.0
 
@@ -339,6 +340,16 @@ func _update_safe_zone(delta: float) -> void:
 			match_player.receive_damage(5)
 	else:
 		safe_zone_damage_clock = 0.0
+
+	safe_zone_bot_damage_clock += delta
+	if safe_zone_bot_damage_clock >= 1.5:
+		safe_zone_bot_damage_clock = 0.0
+		for bot in get_tree().get_nodes_in_group("warfox_bots"):
+			if not is_instance_valid(bot) or bot.health <= 0:
+				continue
+			var bot_distance := Vector2(bot.global_position.x, bot.global_position.z).length()
+			if bot_distance > safe_zone_radius and bot.has_method("receive_zone_damage"):
+				bot.receive_zone_damage(5)
 
 
 func _spawn_loot() -> void:
