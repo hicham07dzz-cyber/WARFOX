@@ -177,6 +177,9 @@ func receive_hit(damage: int) -> void:
 		_defeat()
 
 func _defeat() -> void:
+	var players := get_tree().get_nodes_in_group("warfox_player")
+	if not players.is_empty() and players[0].has_method("register_kill"):
+		players[0].register_kill()
 	set_physics_process(false)
 	visible = false
 	collision_layer = 0
