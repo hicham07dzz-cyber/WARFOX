@@ -13,6 +13,10 @@ var move_input := Vector2.ZERO
 var sprinting := false
 var crouching := false
 var jump_requested := false
+var fire_requested := false
+var fire_cooldown := 0.0
+const FIRE_INTERVAL := 0.22
+const HIT_DAMAGE := 25
 var camera_pivot: Node3D
 var collision_capsule: CollisionShape3D
 var visual_root: Node3D
@@ -115,11 +119,12 @@ func _build_camera() -> void:
 	camera.current = true
 	spring.add_child(camera)
 
-func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool = false) -> void:
+func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool = false, fire: bool = false) -> void:
 	move_input = direction.limit_length(1.0)
 	sprinting = sprint
 	crouching = crouch
 	jump_requested = jump_requested or jump
+	fire_requested = fire_requested or fire
 
 func _set_crouch_state() -> void:
 	var wants_crouch := crouching or Input.is_action_pressed("crouch")
@@ -132,6 +137,10 @@ func _set_crouch_state() -> void:
 		visual_root.position.y = 0.0
 
 func _physics_process(delta: float) -> void:
+	fire_cooldown = maxf(0.0, fire_cooldown - delta)
+	if fire_requested or Input.is_action_just_pressed("fire"):
+		_fire_arcade_ray()
+	fire_requested = false
 	_set_crouch_state()
 	var keyboard := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var input_dir := move_input if move_input.length() > 0.08 else keyboard
@@ -158,3 +167,24 @@ func _physics_process(delta: float) -> void:
 
 	jump_requested = false
 	move_and_slide()
+
+func _fire_arcade_ray() -> void:
+	if fire_cooldown > 0.0:
+		return
+	fire_cooldown = FIRE_INTERVAL
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var screen_center := viewport_size * 0.5
+	var ray_origin := camera.project_ray_origin(screen_center)
+	var ray_direction := camera.project_ray_normal(screen_center)
+	var query := PhysicsRayQueryParameters3D.create(ray_origin, ray_origin + ray_direction * 180.0)
+	query.exclude = [get_rid()]
+	query.collision_mask = 1
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return
+	var collider = hit.get("collider")
+	if collider != null and collider.has_method("receive_hit"):
+		collider.receive_hit(HIT_DAMAGE)
