@@ -27,6 +27,15 @@ var skin_index := 0
 var weapon_index := 0
 var pause_panel: PanelContainer
 var pause_button: Button
+var hud_edit_button: Button
+var hud_edit_hint: Label
+var hud_edit_mode := false
+var hud_layout := ConfigFile.new()
+var hud_drag_control: Control
+var hud_drag_start := Vector2.ZERO
+var hud_control_start := Vector2.ZERO
+var hud_drag_touch := -1
+var hud_movable_controls: Array[Control] = []
 
 func _ready() -> void:
 	_build_hud()
@@ -42,7 +51,7 @@ func _style_button(button: Button, color: Color) -> void:
 
 func _button_style(color: Color, alpha: float) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(color.r, color.g, color.b, alpha)
+	style.bg_color = Color(0.015, 0.025, 0.035, minf(alpha, 0.78))
 	style.corner_radius_top_left = 14
 	style.corner_radius_top_right = 14
 	style.corner_radius_bottom_left = 14
@@ -51,7 +60,7 @@ func _button_style(color: Color, alpha: float) -> StyleBoxFlat:
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
-	style.border_color = Color(1.0, 0.42, 0.12, 0.85)
+	style.border_color = Color(0.92, 0.48, 0.18, 0.82)
 	return style
 
 func _build_hud() -> void:
@@ -282,6 +291,8 @@ func _build_hud() -> void:
 	root.add_child(joystick)
 	_build_armory_panel(root)
 	_build_pause_panel(root)
+	_build_hud_editor(root)
+	_load_hud_layout()
 
 func _build_armory_panel(root: Control) -> void:
 	var world := get_tree().current_scene
@@ -652,3 +663,156 @@ func _resume_session() -> void:
 
 func _exit_tree() -> void:
 	get_tree().paused = false
+
+
+
+func _build_hud_editor(root: Control) -> void:
+	hud_edit_button = Button.new()
+	hud_edit_button.text = "HUD"
+	hud_edit_button.tooltip_text = "CUSTOMIZE CONTROL LAYOUT"
+	hud_edit_button.position = Vector2(148, 128)
+	hud_edit_button.size = Vector2(78, 42)
+	hud_edit_button.add_theme_font_size_override("font_size", 14)
+	_style_button(hud_edit_button, Color(0.12, 0.16, 0.19))
+	hud_edit_button.pressed.connect(_toggle_hud_edit)
+	root.add_child(hud_edit_button)
+
+	hud_edit_hint = Label.new()
+	hud_edit_hint.text = "HUD EDIT  •  DRAG BUTTONS TO MOVE"
+	hud_edit_hint.anchor_left = 0.5
+	hud_edit_hint.anchor_right = 0.5
+	hud_edit_hint.position = Vector2(-190, 58)
+	hud_edit_hint.size = Vector2(380, 32)
+	hud_edit_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hud_edit_hint.add_theme_color_override("font_color", Color(1.0, 0.68, 0.25))
+	hud_edit_hint.add_theme_font_size_override("font_size", 15)
+	hud_edit_hint.visible = false
+	root.add_child(hud_edit_hint)
+
+	var save_button := Button.new()
+	save_button.text = "SAVE HUD"
+	save_button.position = Vector2(148, 176)
+	save_button.size = Vector2(104, 40)
+	_style_button(save_button, Color(0.12, 0.36, 0.25))
+	save_button.visible = false
+	save_button.name = "HUD_Save_Layout"
+	save_button.pressed.connect(_save_hud_layout)
+	root.add_child(save_button)
+
+	var reset_button := Button.new()
+	reset_button.text = "RESET"
+	reset_button.position = Vector2(260, 176)
+	reset_button.size = Vector2(82, 40)
+	_style_button(reset_button, Color(0.35, 0.16, 0.10))
+	reset_button.visible = false
+	reset_button.name = "HUD_Reset_Layout"
+	reset_button.pressed.connect(_reset_hud_layout)
+	root.add_child(reset_button)
+
+	# Register all touch controls so their positions can be adjusted independently.
+	for node in root.get_children():
+		if node is Button and node != hud_edit_button and node.name not in ["HUD_Save_Layout", "HUD_Reset_Layout"]:
+			_register_movable_control(node)
+		elif node is TouchStick or node is MiniRadar:
+			_register_movable_control(node)
+
+func _register_movable_control(control: Control) -> void:
+	if control in hud_movable_controls:
+		return
+	hud_movable_controls.append(control)
+	control.set_meta("hud_default_position", control.position)
+	control.set_meta("hud_default_anchor_left", control.anchor_left)
+	control.set_meta("hud_default_anchor_top", control.anchor_top)
+	control.set_meta("hud_default_anchor_right", control.anchor_right)
+	control.set_meta("hud_default_anchor_bottom", control.anchor_bottom)
+	control.gui_input.connect(_on_movable_control_input.bind(control))
+
+func _on_movable_control_input(event: InputEvent, control: Control) -> void:
+	if not hud_edit_mode:
+		return
+	if event is InputEventScreenTouch:
+		if event.pressed and hud_drag_control == null:
+			hud_drag_control = control
+			hud_drag_touch = event.index
+			hud_drag_start = event.position
+			hud_control_start = control.position
+			control.accept_event()
+		elif not event.pressed and hud_drag_control == control and event.index == hud_drag_touch:
+			hud_drag_control = null
+			hud_drag_touch = -1
+			control.accept_event()
+	elif event is InputEventScreenDrag and hud_drag_control == control and event.index == hud_drag_touch:
+		control.position = hud_control_start + event.position - hud_drag_start
+		control.accept_event()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed and hud_drag_control == null:
+			hud_drag_control = control
+			hud_drag_start = event.position
+			hud_control_start = control.position
+		elif not event.pressed and hud_drag_control == control:
+			hud_drag_control = null
+	elif event is InputEventMouseMotion and hud_drag_control == control and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		control.position = hud_control_start + event.position - hud_drag_start
+
+func _toggle_hud_edit() -> void:
+	hud_edit_mode = not hud_edit_mode
+	hud_edit_hint.visible = hud_edit_mode
+	var save_button := get_node_or_null("Control/HUD_Save_Layout")
+	var reset_button := get_node_or_null("Control/HUD_Reset_Layout")
+	if save_button != null:
+		save_button.visible = hud_edit_mode
+	if reset_button != null:
+		reset_button.visible = hud_edit_mode
+	hud_edit_button.text = "DONE" if hud_edit_mode else "HUD"
+	if not hud_edit_mode:
+		_save_hud_layout()
+
+func _save_hud_layout() -> void:
+	for index in range(hud_movable_controls.size()):
+		var control := hud_movable_controls[index]
+		if is_instance_valid(control):
+			hud_layout.set_value("controls", str(control.get_instance_id()), {
+				"position": control.position,
+				"anchor_left": control.anchor_left,
+				"anchor_top": control.anchor_top,
+				"anchor_right": control.anchor_right,
+				"anchor_bottom": control.anchor_bottom
+			})
+	hud_layout.save("user://warfox_hud_layout.cfg")
+	hud_edit_mode = false
+	if hud_edit_hint != null:
+		hud_edit_hint.visible = false
+	if hud_edit_button != null:
+		hud_edit_button.text = "HUD"
+	for node in get_children():
+		if node is Control:
+			var save_button := node.find_child("HUD_Save_Layout", true, false)
+			var reset_button := node.find_child("HUD_Reset_Layout", true, false)
+			if save_button != null:
+				save_button.visible = false
+			if reset_button != null:
+				reset_button.visible = false
+
+func _load_hud_layout() -> void:
+	var error := hud_layout.load("user://warfox_hud_layout.cfg")
+	if error != OK:
+		return
+	for control in hud_movable_controls:
+		var data: Variant = hud_layout.get_value("controls", str(control.get_instance_id()), {})
+		if data is Dictionary:
+			control.position = data.get("position", control.position)
+			control.anchor_left = data.get("anchor_left", control.anchor_left)
+			control.anchor_top = data.get("anchor_top", control.anchor_top)
+			control.anchor_right = data.get("anchor_right", control.anchor_right)
+			control.anchor_bottom = data.get("anchor_bottom", control.anchor_bottom)
+
+func _reset_hud_layout() -> void:
+	for control in hud_movable_controls:
+		control.position = control.get_meta("hud_default_position", control.position)
+		control.anchor_left = control.get_meta("hud_default_anchor_left", control.anchor_left)
+		control.anchor_top = control.get_meta("hud_default_anchor_top", control.anchor_top)
+		control.anchor_right = control.get_meta("hud_default_anchor_right", control.anchor_right)
+		control.anchor_bottom = control.get_meta("hud_default_anchor_bottom", control.anchor_bottom)
+	hud_layout.clear()
+	hud_layout.save("user://warfox_hud_layout.cfg")
+
