@@ -60,8 +60,9 @@ func _build_island() -> void:
 			var center := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
 			if center.length() > ISLAND_RADIUS:
 				continue
-			_add_terrain_triangle(surface, Vector3(x0, _height_at(x0, z0), z0), Vector3(x1, _height_at(x1, z0), z0), Vector3(x0, _height_at(x0, z1), z1))
-			_add_terrain_triangle(surface, Vector3(x1, _height_at(x1, z0), z0), Vector3(x1, _height_at(x1, z1), z1), Vector3(x0, _height_at(x0, z1), z1))
+			# Upward-facing triangle winding for the island surface.
+			_add_terrain_triangle(surface, Vector3(x0, _height_at(x0, z0), z0), Vector3(x0, _height_at(x0, z1), z1), Vector3(x1, _height_at(x1, z0), z0))
+			_add_terrain_triangle(surface, Vector3(x1, _height_at(x1, z0), z0), Vector3(x0, _height_at(x0, z1), z1), Vector3(x1, _height_at(x1, z1), z1))
 	surface.generate_normals()
 	var mesh_instance := MeshInstance3D.new()
 	mesh_instance.name = "WARFOX_Island_Terrain"
@@ -69,6 +70,7 @@ func _build_island() -> void:
 	var material := StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
 	material.roughness = 1.0
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mesh_instance.material_override = material
 	add_child(mesh_instance)
 
@@ -120,8 +122,8 @@ func _build_landmarks() -> void:
 func _build_preview_camera() -> void:
 	var camera := Camera3D.new()
 	camera.name = "MapPreviewCamera"
-	camera.position = Vector3(900.0, 850.0, 1050.0)
-	camera.look_at(Vector3.ZERO, Vector3.UP)
+	camera.position = Vector3(1050.0, 1000.0, 1050.0)
+	camera.look_at(Vector3(0.0, 25.0, 0.0), Vector3.UP)
 	camera.current = true
 	camera.fov = 48.0
 	add_child(camera)
