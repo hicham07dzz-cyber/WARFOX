@@ -23,6 +23,7 @@ var ready_to_start := false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	get_tree().paused = true
+	_load_audio_settings()
 	_build_interface()
 	_show_intro()
 
@@ -285,6 +286,7 @@ func _build_settings_panel() -> void:
 	volume_slider.custom_minimum_size = Vector2(0, 34)
 	volume_slider.value_changed.connect(func(value: float):
 		_set_master_volume(value)
+		_save_audio_settings(value)
 		volume_value.text = str(int(value)) + "%"
 	)
 	content.add_child(volume_slider)
@@ -384,6 +386,18 @@ func _set_master_volume(value: float) -> void:
 	var bus := AudioServer.get_bus_index("Master")
 	if bus >= 0:
 		AudioServer.set_bus_volume_linear(bus, clampf(value / 100.0, 0.0, 1.0))
+
+func _load_audio_settings() -> void:
+	var config := ConfigFile.new()
+	if config.load("user://warfox_settings.cfg") != OK:
+		return
+	_set_master_volume(float(config.get_value("audio", "master_volume", 100.0)))
+
+func _save_audio_settings(value: float) -> void:
+	var config := ConfigFile.new()
+	config.load("user://warfox_settings.cfg")
+	config.set_value("audio", "master_volume", clampf(value, 0.0, 100.0))
+	config.save("user://warfox_settings.cfg")
 
 
 
