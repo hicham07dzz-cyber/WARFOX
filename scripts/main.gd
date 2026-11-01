@@ -20,6 +20,7 @@ func _setup_input() -> void:
 	_add_key("move_right", KEY_D)
 	_add_key("jump", KEY_SPACE)
 	_add_key("sprint", KEY_SHIFT)
+	_add_key("crouch", KEY_CTRL)
 
 func _add_key(action: String, key: Key) -> void:
 	if not InputMap.has_action(action):
@@ -44,6 +45,7 @@ func _build_environment() -> void:
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	world.environment = environment
 	add_child(world)
+
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-48, -32, 0)
 	sun.light_energy = 1.25
@@ -81,6 +83,7 @@ func _build_island() -> MeshInstance3D:
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mesh_instance.material_override = material
 	add_child(mesh_instance)
+
 	var ground := StaticBody3D.new()
 	ground.name = "IslandCollision"
 	var collision := CollisionShape3D.new()
@@ -112,27 +115,52 @@ func _build_water() -> void:
 	water.material_override = mat
 	add_child(water)
 
-func _add_building(label: String, x: float, z: float, size: Vector3, color: Color) -> void:
+func _add_box_body(parent: Node3D, label: String, size: Vector3, local_position: Vector3, color: Color) -> void:
 	var body := StaticBody3D.new()
 	body.name = label
 	var mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = size
 	mesh.mesh = box
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.roughness = 0.82
-	mesh.material_override = mat
-	mesh.position.y = size.y * 0.5
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.84
+	mesh.material_override = material
 	body.add_child(mesh)
+
 	var shape := CollisionShape3D.new()
 	var box_shape := BoxShape3D.new()
 	box_shape.size = size
 	shape.shape = box_shape
-	shape.position.y = size.y * 0.5
 	body.add_child(shape)
-	body.position = Vector3(x, _height_at(x, z), z)
-	add_child(body)
+	body.position = local_position
+	parent.add_child(body)
+
+func _add_building(label: String, x: float, z: float, size: Vector3, color: Color) -> void:
+	var building := Node3D.new()
+	building.name = label
+	building.position = Vector3(x, _height_at(x, z), z)
+	add_child(building)
+
+	var width := size.x
+	var depth := size.z
+	var height := size.y
+	var wall := 1.2
+	var door_width := minf(4.0, width * 0.12)
+	var door_height := minf(3.2, height * 0.42)
+	var half_w := width * 0.5
+	var half_d := depth * 0.5
+
+	_add_box_body(building, "Interior_Floor", Vector3(width, 1.0, depth), Vector3(0, 0.5, 0), color.darkened(0.22))
+	_add_box_body(building, "Back_Wall", Vector3(width, height, wall), Vector3(0, height * 0.5, -half_d), color)
+	_add_box_body(building, "Left_Wall", Vector3(wall, height, depth), Vector3(-half_w, height * 0.5, 0), color)
+	_add_box_body(building, "Right_Wall", Vector3(wall, height, depth), Vector3(half_w, height * 0.5, 0), color)
+
+	var side_width := (width - door_width) * 0.5
+	_add_box_body(building, "Front_Wall_Left", Vector3(side_width, height, wall), Vector3(-(door_width + side_width) * 0.5, height * 0.5, half_d), color)
+	_add_box_body(building, "Front_Wall_Right", Vector3(side_width, height, wall), Vector3((door_width + side_width) * 0.5, height * 0.5, half_d), color)
+	_add_box_body(building, "Door_Lintel", Vector3(door_width, height - door_height, wall), Vector3(0, door_height + (height - door_height) * 0.5, half_d), color.darkened(0.12))
+	_add_box_body(building, "Roof", Vector3(width + 1.0, 1.0, depth + 1.0), Vector3(0, height + 0.5, 0), color.darkened(0.3))
 
 func _build_landmarks() -> void:
 	_add_building("Central_Command_City", 0, 0, Vector3(100, 34, 90), Color(0.24, 0.29, 0.32))
@@ -146,7 +174,7 @@ func _spawn_player(_terrain: MeshInstance3D) -> void:
 	var player := CharacterBody3D.new()
 	player.name = "WARFOX_Player"
 	player.set_script(player_script)
-	player.position = Vector3(0, _height_at(0, 0) + 3.0, 30)
+	player.position = Vector3(0, _height_at(0, 72) + 2.0, 72)
 	add_child(player)
 	set_meta("player", player)
 
