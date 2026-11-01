@@ -36,6 +36,7 @@ func _ready() -> void:
 	_spawn_loot()
 	_build_safe_zone()
 	_build_hud()
+	_show_boot_screen()
 
 func _setup_input() -> void:
 	_add_key("move_forward", KEY_W)
@@ -689,3 +690,10 @@ func _add_street_lamp(x: float, z: float, metal: Material, lamp_material: Materi
 	var base_y := _height_at(x, z)
 	_add_detail_cylinder("City_Lamp_Post", Vector3(x, base_y + 3.0, z), 0.13, 6.0, metal)
 	_add_detail_box("City_Lamp_Head", Vector3(x, base_y + 6.2, z), Vector3(1.0, 0.28, 1.0), lamp_material)
+
+
+func _show_boot_screen() -> void:
+	var boot := CanvasLayer.new()
+	boot.name = "WARFOX_Boot_Screen"
+	boot.set_script(load("res://scripts/boot_screen.gd"))
+	add_child(boot)
