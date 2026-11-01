@@ -48,14 +48,14 @@ func _build_interface() -> void:
 	root.add_child(intro_panel)
 
 	logo_label = Label.new()
-	logo_label.text = "ᛟ"
+	logo_label.text = "🦊"
 	logo_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	logo_label.position = Vector2(-54, -142)
 	logo_label.size = Vector2(108, 92)
 	logo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	logo_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	logo_label.add_theme_color_override("font_color", Color(1.0, 0.38, 0.08))
-	logo_label.add_theme_font_size_override("font_size", 76)
+	logo_label.add_theme_font_size_override("font_size", 68)
 	intro_panel.add_child(logo_label)
 
 	var title := Label.new()
