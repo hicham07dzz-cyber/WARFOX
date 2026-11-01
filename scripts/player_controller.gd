@@ -22,6 +22,10 @@ var collision_capsule: CollisionShape3D
 var visual_root: Node3D
 var standing_height := 1.85
 var crouched_height := 1.15
+const MAX_HEALTH := 100
+var health := MAX_HEALTH
+var spawn_position := Vector3.ZERO
+var is_knocked_out := false
 const LOOK_SENSITIVITY := 0.0035
 const MIN_PITCH := deg_to_rad(-32.0)
 const MAX_PITCH := deg_to_rad(24.0)
@@ -32,6 +36,8 @@ func _ready() -> void:
 	_build_collision()
 	_build_visual()
 	_build_camera()
+	spawn_position = global_position
+	add_to_group("warfox_player")
 
 func _build_collision() -> void:
 	collision_capsule = CollisionShape3D.new()
@@ -122,6 +128,21 @@ func _build_camera() -> void:
 	camera.current = true
 	spring.add_child(camera)
 
+func receive_damage(amount: int) -> void:
+	if is_knocked_out or amount <= 0:
+		return
+	health = maxi(0, health - amount)
+	if health == 0:
+		is_knocked_out = true
+		velocity = Vector3.ZERO
+		await get_tree().create_timer(2.0).timeout
+		if not is_inside_tree():
+			return
+		health = MAX_HEALTH
+		global_position = spawn_position
+		velocity = Vector3.ZERO
+		is_knocked_out = false
+
 func add_look_delta(delta_pixels: Vector2) -> void:
 	camera_pivot.rotation.y -= delta_pixels.x * LOOK_SENSITIVITY
 	camera_pivot.rotation.x = clampf(camera_pivot.rotation.x - delta_pixels.y * LOOK_SENSITIVITY, MIN_PITCH, MAX_PITCH)
@@ -144,6 +165,8 @@ func _set_crouch_state() -> void:
 		visual_root.position.y = 0.0
 
 func _physics_process(delta: float) -> void:
+	if is_knocked_out:
+		return
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
 	if fire_requested or Input.is_action_just_pressed("fire"):
 		_fire_arcade_ray()
