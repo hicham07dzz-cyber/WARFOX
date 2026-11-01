@@ -7,6 +7,11 @@ var transport_plane: Node3D
 var match_intro_time := 0.0
 var drop_started := false
 var match_player: WarfoxPlayer
+var safe_zone_visual: MeshInstance3D
+var safe_zone_elapsed := 0.0
+var safe_zone_damage_clock := 0.0
+var safe_zone_radius := 520.0
+var safe_zone_last_visual_radius := 520.0
 
 func _ready() -> void:
 	_setup_input()
@@ -19,6 +24,7 @@ func _ready() -> void:
 	_spawn_training_targets()
 	_spawn_bots()
 	_spawn_loot()
+	_build_safe_zone()
 	_build_hud()
 
 func _setup_input() -> void:
@@ -265,17 +271,56 @@ func _add_aircraft_box(parent: Node3D, label: String, size: Vector3, pos: Vector
 	parent.add_child(part)
 
 func _process(delta: float) -> void:
-	if transport_plane == null or match_player == null:
+	if transport_plane != null and match_player != null:
+		match_intro_time += delta
+		transport_plane.position.x += 48.0 * delta
+		transport_plane.position.z = sin(match_intro_time * 0.42) * 7.0
+		transport_plane.rotation.z = sin(match_intro_time * 0.42) * 0.025
+		if not drop_started and match_intro_time >= 2.4:
+			drop_started = true
+			match_player.deploy_parachute()
+		if match_intro_time >= 9.0:
+			transport_plane.visible = false
+	_update_safe_zone(delta)
+
+func _build_safe_zone() -> void:
+	safe_zone_visual = MeshInstance3D.new()
+	safe_zone_visual.name = "WARFOX_Safe_Zone_Boundary"
+	var ring := TorusMesh.new()
+	ring.inner_radius = safe_zone_radius - 1.2
+	ring.outer_radius = safe_zone_radius + 1.2
+	ring.rings = 6
+	ring.ring_segments = 128
+	safe_zone_visual.mesh = ring
+	safe_zone_visual.position = Vector3(0, 25, 0)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.12, 0.72, 1.0, 0.78)
+	material.emission_enabled = true
+	material.emission = Color(0.05, 0.42, 1.0)
+	material.emission_energy_multiplier = 1.6
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	safe_zone_visual.material_override = material
+	add_child(safe_zone_visual)
+
+func _update_safe_zone(delta: float) -> void:
+	if match_player == null or safe_zone_visual == null:
 		return
-	match_intro_time += delta
-	transport_plane.position.x += 48.0 * delta
-	transport_plane.position.z = sin(match_intro_time * 0.42) * 7.0
-	transport_plane.rotation.z = sin(match_intro_time * 0.42) * 0.025
-	if not drop_started and match_intro_time >= 2.4:
-		drop_started = true
-		match_player.deploy_parachute()
-	if match_intro_time >= 9.0:
-		transport_plane.visible = false
+	safe_zone_elapsed += delta
+	var shrink_progress := clampf((safe_zone_elapsed - 30.0) / 240.0, 0.0, 1.0)
+	safe_zone_radius = lerpf(520.0, 90.0, shrink_progress)
+	if absf(safe_zone_radius - safe_zone_last_visual_radius) >= 1.0:
+		var ring := safe_zone_visual.mesh as TorusMesh
+		ring.inner_radius = maxf(1.0, safe_zone_radius - 1.2)
+		ring.outer_radius = safe_zone_radius + 1.2
+		safe_zone_last_visual_radius = safe_zone_radius
+	var player_distance := Vector2(match_player.global_position.x, match_player.global_position.z).length()
+	if player_distance > safe_zone_radius:
+		safe_zone_damage_clock += delta
+		if safe_zone_damage_clock >= 1.5:
+			safe_zone_damage_clock = 0.0
+			match_player.receive_damage(5)
+	else:
+		safe_zone_damage_clock = 0.0
 
 
 func _spawn_loot() -> void:
