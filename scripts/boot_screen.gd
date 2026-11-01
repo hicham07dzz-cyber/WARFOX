@@ -6,7 +6,11 @@ var intro_panel: Control
 var menu_panel: PanelContainer
 var settings_panel: PanelContainer
 var profile_panel: PanelContainer
+var skin_panel: PanelContainer
+var skin_name_label: Label
 var account_manager: Node
+var selected_skin_index := 0
+const SKIN_NAMES := ["FOX COMMANDER", "SHADOW RECON", "DESERT PHANTOM", "ARCTIC WOLF", "EMBER GUARD", "NEON HUNTER"]
 var progress_bar: ProgressBar
 var progress_label: Label
 var status_label: Label
@@ -176,6 +180,13 @@ func _build_interface() -> void:
 	start_button.pressed.connect(_start_game)
 	menu.add_child(start_button)
 
+	var skins_button := Button.new()
+	skins_button.text = "OPERATOR SKINS"
+	skins_button.custom_minimum_size = Vector2(0, 46)
+	_style_menu_button(skins_button, Color(0.35, 0.22, 0.12))
+	skins_button.pressed.connect(_show_skins)
+	menu.add_child(skins_button)
+
 	var profile_button := Button.new()
 	profile_button.text = "PLAYER PROFILE"
 	profile_button.custom_minimum_size = Vector2(0, 46)
@@ -192,6 +203,7 @@ func _build_interface() -> void:
 
 	_build_settings_panel()
 	_build_profile_panel()
+	_build_skins_panel()
 
 	var footer := Label.new()
 	footer.text = "BUILD  0.1  •  WARFOX PROJECT"
@@ -358,6 +370,8 @@ func _show_profile() -> void:
 func _show_main_menu() -> void:
 	settings_panel.visible = false
 	profile_panel.visible = false
+	if skin_panel != null:
+		skin_panel.visible = false
 	menu_panel.visible = true
 
 func _get_master_volume() -> float:
@@ -370,3 +384,85 @@ func _set_master_volume(value: float) -> void:
 	var bus := AudioServer.get_bus_index("Master")
 	if bus >= 0:
 		AudioServer.set_bus_volume_linear(bus, clampf(value / 100.0, 0.0, 1.0))
+
+
+
+func _build_skins_panel() -> void:
+	skin_panel = _make_secondary_panel("WARFOX  //  OPERATOR SKINS")
+	var content := skin_panel.get_child(0) as VBoxContainer
+	skin_name_label = Label.new()
+	skin_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	skin_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	skin_name_label.custom_minimum_size = Vector2(0, 100)
+	skin_name_label.add_theme_color_override("font_color", Color(1.0, 0.58, 0.20))
+	skin_name_label.add_theme_font_size_override("font_size", 24)
+	skin_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(skin_name_label)
+	var navigation := HBoxContainer.new()
+	navigation.add_theme_constant_override("separation", 10)
+	var previous := Button.new()
+	previous.text = "PREVIOUS"
+	previous.custom_minimum_size = Vector2(0, 46)
+	previous.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_menu_button(previous, Color(0.16, 0.27, 0.32))
+	previous.pressed.connect(_change_skin.bind(-1))
+	navigation.add_child(previous)
+	var next := Button.new()
+	next.text = "NEXT"
+	next.custom_minimum_size = Vector2(0, 46)
+	next.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_menu_button(next, Color(0.16, 0.27, 0.32))
+	next.pressed.connect(_change_skin.bind(1))
+	navigation.add_child(next)
+	content.add_child(navigation)
+	var equip := Button.new()
+	equip.text = "EQUIP THIS SKIN"
+	equip.custom_minimum_size = Vector2(0, 52)
+	_style_menu_button(equip, Color(0.72, 0.23, 0.06))
+	equip.pressed.connect(_equip_selected_skin)
+	content.add_child(equip)
+	var back := Button.new()
+	back.text = "BACK TO MAIN MENU"
+	back.custom_minimum_size = Vector2(0, 44)
+	_style_menu_button(back, Color(0.20, 0.30, 0.34))
+	back.pressed.connect(_show_main_menu)
+	content.add_child(back)
+
+func _show_skins() -> void:
+	menu_panel.visible = false
+	settings_panel.visible = false
+	profile_panel.visible = false
+	skin_panel.visible = true
+	var world := get_tree().current_scene
+	if world != null:
+		account_manager = world.get_node_or_null("WARFOX_Account")
+	if account_manager != null:
+		var current := str(account_manager.get("equipped_skin"))
+		selected_skin_index = maxi(0, SKIN_NAMES.find(current))
+	_refresh_skin_label()
+
+func _change_skin(direction: int) -> void:
+	selected_skin_index = posmod(selected_skin_index + direction, SKIN_NAMES.size())
+	_refresh_skin_label()
+
+func _refresh_skin_label() -> void:
+	if skin_name_label == null:
+		return
+	var selected := SKIN_NAMES[selected_skin_index]
+	var equipped := ""
+	if account_manager != null:
+		equipped = str(account_manager.get("equipped_skin"))
+	skin_name_label.text = selected + ("\n\nCURRENTLY EQUIPPED" if selected == equipped else "\n\nAVAILABLE")
+
+func _equip_selected_skin() -> void:
+	if account_manager == null:
+		return
+	var selected := SKIN_NAMES[selected_skin_index]
+	if bool(account_manager.call("equip_skin", selected)):
+		var world := get_tree().current_scene
+		if world != null:
+			var player := world.get_node_or_null("WARFOX_Player")
+			if player != null and player.has_method("apply_equipped_loadout"):
+				player.call("apply_equipped_loadout", account_manager)
+		_refresh_skin_label()
+
