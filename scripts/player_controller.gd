@@ -29,6 +29,7 @@ var muzzle_light: OmniLight3D
 var muzzle_flash_time := 0.0
 var reload_animation_time := 0.0
 var fox_spirit: Node3D
+var fox_spirit_material: StandardMaterial3D
 var black_fox_skin: Node3D
 var black_fox_coat_left: Node3D
 var black_fox_coat_right: Node3D
@@ -373,6 +374,7 @@ func _apply_black_fox_variant(skin_name: String) -> void:
 	glow_mat.emission = glow
 	glow_mat.emission_energy_multiplier = 2.4
 	if fox_spirit != null:
+		fox_spirit_material = glow_mat
 		for spirit_node in fox_spirit.find_children("*", "MeshInstance3D", true, false):
 			(spirit_node as MeshInstance3D).material_override = glow_mat
 	if black_fox_aura_material != null:
@@ -514,6 +516,7 @@ func _build_fox_spirit() -> void:
 	fox_spirit.visible = false
 	visual_root.add_child(fox_spirit)
 	var spirit_mat := StandardMaterial3D.new()
+	fox_spirit_material = spirit_mat
 	spirit_mat.albedo_color = Color(1.0, 0.12, 0.025, 0.78)
 	spirit_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	spirit_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -673,11 +676,19 @@ func _update_character_animation(delta: float) -> void:
 	if fox_spirit != null:
 		var fox_cycle := fposmod(animation_clock, 10.0)
 		var fox_skin_equipped := black_fox_skin != null and black_fox_skin.visible
-		fox_spirit.visible = fox_skin_equipped and fox_cycle > 5.8 and fox_cycle < 8.5
-		var fox_fade := minf((fox_cycle - 5.8) / 0.35, (8.5 - fox_cycle) / 0.35)
-		fox_spirit.scale = Vector3.ONE * (0.78 + 0.22 * sin(animation_clock * 8.0)) * clampf(fox_fade, 0.0, 1.0)
+		var fox_window := fox_cycle > 5.8 and fox_cycle < 8.5
+		var fox_fade := clampf(minf((fox_cycle - 5.8) / 0.48, (8.5 - fox_cycle) / 0.48), 0.0, 1.0)
+		fox_spirit.visible = fox_skin_equipped and fox_window
+		var spirit_breath := 0.92 + 0.08 * sin(animation_clock * 5.5)
+		fox_spirit.scale = Vector3.ONE * spirit_breath * (0.78 + 0.22 * fox_fade)
 		fox_spirit.position.y = 1.66 + sin(animation_clock * 3.4) * 0.055
 		fox_spirit.rotation.y = sin(animation_clock * 1.8) * 0.18
+		fox_spirit.rotation.z = sin(animation_clock * 2.6) * 0.08
+		if fox_spirit_material != null:
+			var spirit_color := fox_spirit_material.albedo_color
+			spirit_color.a = 0.78 * fox_fade
+			fox_spirit_material.albedo_color = spirit_color
+			fox_spirit_material.emission_energy_multiplier = 1.2 + fox_fade * 1.8
 		var spirit_tail := fox_spirit.get_node_or_null("Spirit_Tail") as MeshInstance3D
 		if spirit_tail != null:
 			spirit_tail.rotation.x = -0.9 + sin(animation_clock * 7.0) * 0.16
