@@ -59,10 +59,11 @@ func _build_bot() -> void:
 	add_child(marker)
 
 func _add_part(mesh: PrimitiveMesh, dimensions: Vector3, pos: Vector3, material: Material) -> void:
-	mesh.set("size", dimensions) if mesh is BoxMesh else null
-	if mesh is CapsuleMesh:
-		mesh.radius = dimensions.x * 0.5
-		mesh.height = dimensions.y
+	if mesh is BoxMesh:
+		(mesh as BoxMesh).size = dimensions
+	elif mesh is CapsuleMesh:
+		(mesh as CapsuleMesh).radius = dimensions.x * 0.5
+		(mesh as CapsuleMesh).height = dimensions.y
 	var part := MeshInstance3D.new()
 	part.mesh = mesh
 	part.position = pos
