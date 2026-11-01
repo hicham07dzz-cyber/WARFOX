@@ -28,6 +28,7 @@ func _ready() -> void:
 	_build_landmarks()
 	_build_nature_dressing()
 	_build_roads()
+	_build_region_details()
 	_spawn_player(terrain)
 	_build_transport_plane()
 	_spawn_training_targets()
@@ -584,3 +585,107 @@ func _add_road(points: Array, road_width: float, road_material: Material) -> voi
 	road.mesh = surface.commit()
 	road.material_override = road_material
 	add_child(road)
+
+
+# Distinct visual landmarks help players recognize each island region.
+# Decorative pieces intentionally have no collision to keep mobile physics light.
+func _build_region_details() -> void:
+	var concrete := _make_detail_material(Color(0.24, 0.28, 0.30))
+	var pale_concrete := _make_detail_material(Color(0.62, 0.63, 0.59))
+	var runway_paint := _make_detail_material(Color(0.86, 0.87, 0.81))
+	var cyan_glass := _make_detail_material(Color(0.08, 0.56, 0.65), 0.25, 0.25)
+	var pool_water := _make_detail_material(Color(0.025, 0.42, 0.58), 0.35, 0.18)
+	var warm_light := _make_detail_material(Color(1.0, 0.66, 0.28), 0.1, 0.35)
+	var metal := _make_detail_material(Color(0.16, 0.20, 0.22), 0.72, 0.42)
+
+	# Central Command City: glass accents and a readable plaza grid.
+	for i in range(4):
+		var offset := float(i) * 18.0 - 27.0
+		_add_detail_box("City_Plaza_Paving", Vector3(offset, _height_at(offset, 48.0) + 0.18, 48.0),
+			Vector3(0.7, 0.12, 34.0), pale_concrete)
+	_add_detail_box("City_Tower_Glass_Front", Vector3(58, _height_at(58, -40) + 18.0, -40),
+		Vector3(14, 25, 0.35), cyan_glass)
+
+	# Airfield: runway centerline, threshold bars and edge lights.
+	for i in range(11):
+		var z := 88.0 + float(i) * 5.2
+		_add_detail_box("Runway_Center_Marking", Vector3(245, _height_at(245, z) + 0.42, z),
+			Vector3(1.0, 0.08, 2.8), runway_paint)
+	for side in [-1.0, 1.0]:
+		for i in range(7):
+			var x := 218.0 + float(i) * 9.0
+			_add_detail_box("Runway_Threshold_Marking", Vector3(x, _height_at(x, 88.0 + side * 22.0) + 0.43, 88.0 + side * 22.0),
+				Vector3(3.8, 0.08, 0.65), runway_paint)
+		for i in range(9):
+			var z := 72.0 + float(i) * 10.0
+			_add_detail_box("Airfield_Edge_Light", Vector3(188.0 + side * 0.0, _height_at(188.0, z) + 0.65, z),
+				Vector3(0.42, 0.75, 0.42), warm_light)
+
+	# Ironworks: three smokestacks create a recognizable industrial skyline.
+	for i in range(3):
+		var x := 35.0 + float(i) * 24.0
+		_add_detail_cylinder("Ironworks_Stack", Vector3(x, _height_at(x, 270.0) + 15.0, 270.0),
+			2.1, 30.0, metal)
+
+	# Sunset Resort: pool deck and blue pool beside the hotel.
+	_add_detail_box("Resort_Pool_Water", Vector3(-112, _height_at(-112, 326) + 0.28, 326),
+		Vector3(23, 0.22, 12), pool_water)
+	_add_detail_box("Resort_Pool_Deck", Vector3(-112, _height_at(-112, 326) + 0.12, 326),
+		Vector3(29, 0.18, 18), pale_concrete)
+	_add_detail_box("Resort_Boardwalk", Vector3(-178, _height_at(-178, 378) + 0.18, 378),
+		Vector3(76, 0.28, 5), concrete)
+
+	# Old Quarry: visible stepped retaining walls around the excavation.
+	for tier in range(3):
+		var radius := 29.0 + float(tier) * 10.0
+		var y := _height_at(410.0 + radius, 220.0) + 1.0 + float(tier) * 2.0
+		_add_detail_box("Quarry_Terrace_Wall", Vector3(410.0 + radius, y, 220.0),
+			Vector3(2.0, 2.2, 35.0 + float(tier) * 7.0), concrete)
+
+	# Signal Station: antenna mast with crossbars and a small beacon.
+	_add_detail_cylinder("Signal_Antenna_Mast", Vector3(150, _height_at(150, -390) + 18.0, -390),
+		0.48, 36.0, metal)
+	for height in [12.0, 22.0, 30.0]:
+		_add_detail_box("Signal_Antenna_Crossbar", Vector3(150, _height_at(150, -390) + height, -390),
+			Vector3(7.5, 0.28, 0.28), pale_concrete)
+	_add_detail_box("Signal_Beacon", Vector3(150, _height_at(150, -390) + 36.8, -390),
+		Vector3(0.9, 0.9, 0.9), warm_light)
+
+	# A small number of warm street lamps make the central plaza legible.
+	for point in [Vector2(-34, 36), Vector2(34, 36), Vector2(-34, -36), Vector2(34, -36)]:
+		_add_street_lamp(point.x, point.y, metal, warm_light)
+
+func _make_detail_material(color: Color, metallic: float = 0.0, roughness: float = 0.86) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.metallic = metallic
+	material.roughness = roughness
+	return material
+
+func _add_detail_box(label: String, position: Vector3, size: Vector3, material: Material) -> void:
+	var visual := MeshInstance3D.new()
+	visual.name = label
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	visual.mesh = mesh
+	visual.position = position
+	visual.material_override = material
+	add_child(visual)
+
+func _add_detail_cylinder(label: String, position: Vector3, radius: float, height: float, material: Material) -> void:
+	var visual := MeshInstance3D.new()
+	visual.name = label
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius * 0.82
+	mesh.bottom_radius = radius
+	mesh.height = height
+	mesh.radial_segments = 10
+	visual.mesh = mesh
+	visual.position = position
+	visual.material_override = material
+	add_child(visual)
+
+func _add_street_lamp(x: float, z: float, metal: Material, lamp_material: Material) -> void:
+	var base_y := _height_at(x, z)
+	_add_detail_cylinder("City_Lamp_Post", Vector3(x, base_y + 3.0, z), 0.13, 6.0, metal)
+	_add_detail_box("City_Lamp_Head", Vector3(x, base_y + 6.2, z), Vector3(1.0, 0.28, 1.0), lamp_material)
