@@ -26,6 +26,7 @@ func _setup_input() -> void:
 	_add_key("fire", KEY_F)
 	_add_key("heal", KEY_H)
 	_add_key("parachute", KEY_P)
+	_add_key("reload", KEY_R)
 	var mouse_fire := InputEventMouseButton.new()
 	mouse_fire.button_index = MOUSE_BUTTON_LEFT
 	InputMap.action_add_event("fire", mouse_fire)
