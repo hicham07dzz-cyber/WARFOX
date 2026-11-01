@@ -34,5 +34,6 @@ jobs:
           git add assets/environment
           if ! git diff --cached --quiet; then
             git commit -m "Import licensed CC0 3D environment models"
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
