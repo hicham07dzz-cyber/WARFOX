@@ -127,7 +127,7 @@ func _apply_skin_palette(skin_name: String) -> void:
 	var accent_color := Color(0.95, 0.29, 0.055)
 	var helmet_color := Color(0.055, 0.075, 0.085)
 	match skin_name:
-		"BLACK FOX":
+		"BLACK FOX RED", "BLACK FOX BLUE", "BLACK FOX GOLD", "BLACK FOX PURPLE", "BLACK FOX":
 			armor_color = Color(0.025, 0.018, 0.028)
 			fabric_color = Color(0.045, 0.035, 0.052)
 			accent_color = Color(1.0, 0.018, 0.035)
