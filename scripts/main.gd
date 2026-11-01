@@ -3,6 +3,10 @@ extends Node3D
 const GRID_SIZE := 100
 const CELL_SIZE := 12.0
 const ISLAND_RADIUS := 570.0
+var transport_plane: Node3D
+var match_intro_time := 0.0
+var drop_started := false
+var match_player: WarfoxPlayer
 
 func _ready() -> void:
 	_setup_input()
@@ -11,6 +15,7 @@ func _ready() -> void:
 	_build_water()
 	_build_landmarks()
 	_spawn_player(terrain)
+	_build_transport_plane()
 	_spawn_training_targets()
 	_spawn_bots()
 	_build_hud()
@@ -183,8 +188,10 @@ func _spawn_player(_terrain: MeshInstance3D) -> void:
 	var player := CharacterBody3D.new()
 	player.name = "WARFOX_Player"
 	player.set_script(player_script)
-	player.position = Vector3(0, _height_at(0, 72) + 2.0, 72)
+	player.position = Vector3(-105, 174, 0)
 	add_child(player)
+	player.velocity = Vector3(0, -15, 0)
+	match_player = player
 	set_meta("player", player)
 
 func _build_hud() -> void:
@@ -212,3 +219,58 @@ func _spawn_bots() -> void:
 		bot.set_script(bot_script)
 		bot.position = Vector3(point.x, _height_at(point.x, point.y), point.y)
 		add_child(bot)
+
+
+func _build_transport_plane() -> void:
+	transport_plane = Node3D.new()
+	transport_plane.name = "WARFOX_Transport_Aircraft"
+	transport_plane.position = Vector3(-145, 183, 0)
+	add_child(transport_plane)
+	var hull_mat := StandardMaterial3D.new()
+	hull_mat.albedo_color = Color(0.16, 0.20, 0.20)
+	hull_mat.metallic = 0.48
+	hull_mat.roughness = 0.52
+	var trim_mat := StandardMaterial3D.new()
+	trim_mat.albedo_color = Color(0.88, 0.25, 0.055)
+	trim_mat.metallic = 0.25
+	_add_aircraft_box(transport_plane, "Fuselage", Vector3(3.4, 3.2, 22.0), Vector3(0, 0, 0), hull_mat)
+	_add_aircraft_box(transport_plane, "Main_Wing", Vector3(31.0, 0.55, 5.2), Vector3(0, 0.3, -1.0), hull_mat)
+	_add_aircraft_box(transport_plane, "Tail_Wing", Vector3(12.0, 0.4, 3.0), Vector3(0, 1.0, 8.2), hull_mat)
+	_add_aircraft_box(transport_plane, "Tail_Fin", Vector3(0.55, 4.2, 3.5), Vector3(0, 2.3, 8.7), hull_mat)
+	_add_aircraft_box(transport_plane, "Nose_Stripe", Vector3(3.1, 1.0, 1.0), Vector3(0, -0.2, -10.8), trim_mat)
+	for side in [-1.0, 1.0]:
+		var engine := MeshInstance3D.new()
+		var engine_mesh := CylinderMesh.new()
+		engine_mesh.top_radius = 0.8
+		engine_mesh.bottom_radius = 0.8
+		engine_mesh.height = 4.0
+		engine.mesh = engine_mesh
+		engine.rotation.x = PI * 0.5
+		engine.position = Vector3(side * 8.0, -0.25, -1.0)
+		engine.material_override = hull_mat
+		transport_plane.add_child(engine)
+		_add_aircraft_box(transport_plane, "Engine_Orange_Marking", Vector3(1.7, 0.12, 1.0), Vector3(side * 8.0, 0.35, -1.0), trim_mat)
+	_add_aircraft_box(transport_plane, "Rear_Ramp", Vector3(2.8, 0.25, 3.0), Vector3(0, -1.4, 12.0), trim_mat)
+
+func _add_aircraft_box(parent: Node3D, label: String, size: Vector3, pos: Vector3, material: Material) -> void:
+	var part := MeshInstance3D.new()
+	part.name = label
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	part.mesh = mesh
+	part.position = pos
+	part.material_override = material
+	parent.add_child(part)
+
+func _process(delta: float) -> void:
+	if transport_plane == null or match_player == null:
+		return
+	match_intro_time += delta
+	transport_plane.position.x += 48.0 * delta
+	transport_plane.position.z = sin(match_intro_time * 0.42) * 7.0
+	transport_plane.rotation.z = sin(match_intro_time * 0.42) * 0.025
+	if not drop_started and match_intro_time >= 2.4:
+		drop_started = true
+		match_player.deploy_parachute()
+	if match_intro_time >= 9.0:
+		transport_plane.visible = false
