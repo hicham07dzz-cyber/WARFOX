@@ -26,6 +26,7 @@ func _ready() -> void:
 	var terrain := _build_island()
 	_build_water()
 	_build_landmarks()
+	_build_nature_dressing()
 	_spawn_player(terrain)
 	_build_transport_plane()
 	_spawn_training_targets()
@@ -222,6 +223,120 @@ func _build_landmarks() -> void:
 
 	_add_building("10_Signal_Station_Main", 150, -390, Vector3(36, 16, 30), Color(0.25, 0.31, 0.34))
 	_add_building("10_Signal_Station_Generator", 190, -360, Vector3(18, 8, 16), Color(0.22, 0.26, 0.28))
+
+
+# Temporary procedural nature dressing. These meshes are shared and lightweight;
+# replace them with licensed GLB assets when the art pack is imported.
+func _build_nature_dressing() -> void:
+	var trunk_mat := StandardMaterial3D.new()
+	trunk_mat.albedo_color = Color(0.25, 0.16, 0.09)
+	trunk_mat.roughness = 1.0
+	var pine_mat := StandardMaterial3D.new()
+	pine_mat.albedo_color = Color(0.075, 0.20, 0.13)
+	pine_mat.roughness = 1.0
+	var leaf_mat := StandardMaterial3D.new()
+	leaf_mat.albedo_color = Color(0.12, 0.29, 0.16)
+	leaf_mat.roughness = 1.0
+	var rock_mat := StandardMaterial3D.new()
+	rock_mat.albedo_color = Color(0.34, 0.33, 0.29)
+	rock_mat.roughness = 1.0
+
+	# Pinecrest Forest: dense tree clusters around, not on top of, the cabins.
+	for i in range(42):
+		var angle := float(i) * 2.399
+		var radius := 28.0 + float(i % 7) * 8.0
+		var x := 350.0 + cos(angle) * radius
+		var z := -180.0 + sin(angle) * radius
+		_add_pine_tree(x, z, 0.82 + float(i % 5) * 0.10, trunk_mat, pine_mat)
+
+	# Redstone ridges and Old Quarry get scattered boulders for a stronger silhouette.
+	for i in range(22):
+		var angle := float(i) * 2.17
+		var radius := 16.0 + float(i % 6) * 7.0
+		_add_rock(-410.0 + cos(angle) * radius, -230.0 + sin(angle) * radius,
+			0.9 + float(i % 4) * 0.28, rock_mat)
+	for i in range(16):
+		var angle := float(i) * 2.41
+		var radius := 22.0 + float(i % 5) * 6.0
+		_add_rock(410.0 + cos(angle) * radius, 220.0 + sin(angle) * radius,
+			0.8 + float(i % 3) * 0.25, rock_mat)
+
+	# Coastal Village and Sunset Resort receive palm silhouettes.
+	for i in range(12):
+		var angle := float(i) * TAU / 12.0
+		_add_palm_tree(-330.0 + cos(angle) * 52.0, 210.0 + sin(angle) * 48.0,
+			1.0 + float(i % 3) * 0.12, trunk_mat, leaf_mat)
+	for i in range(10):
+		var angle := float(i) * TAU / 10.0
+		_add_palm_tree(-150.0 + cos(angle) * 62.0, 350.0 + sin(angle) * 48.0,
+			1.05 + float(i % 2) * 0.12, trunk_mat, leaf_mat)
+
+func _add_pine_tree(x: float, z: float, tree_scale: float, trunk_mat: Material, leaf_mat: Material) -> void:
+	var tree := Node3D.new()
+	tree.name = "Pinecrest_Pine"
+	tree.position = Vector3(x, _height_at(x, z), z)
+	tree.scale = Vector3.ONE * tree_scale
+	add_child(tree)
+	var trunk := MeshInstance3D.new()
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.16
+	trunk_mesh.bottom_radius = 0.25
+	trunk_mesh.height = 2.8
+	trunk.mesh = trunk_mesh
+	trunk.position.y = 1.4
+	trunk.material_override = trunk_mat
+	tree.add_child(trunk)
+	for tier in range(3):
+		var crown := MeshInstance3D.new()
+		var crown_mesh := ConeMesh.new()
+		crown_mesh.bottom_radius = 1.25 - float(tier) * 0.25
+		crown_mesh.height = 2.15
+		crown.mesh = crown_mesh
+		crown.position.y = 2.0 + float(tier) * 0.92
+		crown.material_override = leaf_mat
+		tree.add_child(crown)
+
+func _add_palm_tree(x: float, z: float, tree_scale: float, trunk_mat: Material, leaf_mat: Material) -> void:
+	var tree := Node3D.new()
+	tree.name = "Coastal_Palm"
+	tree.position = Vector3(x, _height_at(x, z), z)
+	tree.scale = Vector3.ONE * tree_scale
+	add_child(tree)
+	var trunk := MeshInstance3D.new()
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.13
+	trunk_mesh.bottom_radius = 0.23
+	trunk_mesh.height = 4.8
+	trunk.mesh = trunk_mesh
+	trunk.position.y = 2.4
+	trunk.rotation.z = -0.10
+	trunk.material_override = trunk_mat
+	tree.add_child(trunk)
+	for frond in range(6):
+		var leaf := MeshInstance3D.new()
+		var leaf_mesh := BoxMesh.new()
+		leaf_mesh.size = Vector3(0.22, 0.10, 2.25)
+		leaf.mesh = leaf_mesh
+		leaf.position = Vector3(0, 4.65, 0)
+		leaf.rotation.y = float(frond) * TAU / 6.0
+		leaf.rotation.x = -0.18
+		leaf.material_override = leaf_mat
+		tree.add_child(leaf)
+
+func _add_rock(x: float, z: float, rock_scale: float, rock_mat: Material) -> void:
+	var rock := MeshInstance3D.new()
+	rock.name = "Terrain_Boulder"
+	var rock_mesh := SphereMesh.new()
+	rock_mesh.radius = 1.0
+	rock_mesh.height = 1.7
+	rock_mesh.radial_segments = 7
+	rock_mesh.rings = 4
+	rock.mesh = rock_mesh
+	rock.scale = Vector3(rock_scale * 1.35, rock_scale * 0.72, rock_scale)
+	rock.position = Vector3(x, _height_at(x, z) + rock_scale * 0.35, z)
+	rock.rotation = Vector3(float(int(x) % 7) * 0.08, float(int(z) % 9), 0.12)
+	rock.material_override = rock_mat
+	add_child(rock)
 
 func _spawn_player(_terrain: MeshInstance3D) -> void:
 	var player_script = load("res://scripts/player_controller.gd")
