@@ -82,7 +82,7 @@ func _build_hud() -> void:
 	root.add_child(look_area)
 
 	var title := Label.new()
-	title.text = "HICHAM  |  WARFOX"
+	title.text = "WARFOX"
 	title.position = Vector2(24, 18)
 	title.add_theme_color_override("font_color", Color(1.0, 0.42, 0.08))
 	title.add_theme_font_size_override("font_size", 23)
@@ -732,6 +732,7 @@ func _register_movable_control(control: Control) -> void:
 	if control in hud_movable_controls:
 		return
 	hud_movable_controls.append(control)
+	control.set_meta("hud_layout_key", "control_%02d" % (hud_movable_controls.size() - 1))
 	control.set_meta("hud_default_position", control.position)
 	control.set_meta("hud_default_anchor_left", control.anchor_left)
 	control.set_meta("hud_default_anchor_top", control.anchor_top)
@@ -746,7 +747,7 @@ func _on_movable_control_input(event: InputEvent, control: Control) -> void:
 		if event.pressed and hud_drag_control == null:
 			hud_drag_control = control
 			hud_drag_touch = event.index
-			hud_drag_start = event.position
+			hud_drag_start = Vector2.ZERO
 			hud_control_start = control.position
 			control.accept_event()
 		elif not event.pressed and hud_drag_control == control and event.index == hud_drag_touch:
@@ -754,17 +755,17 @@ func _on_movable_control_input(event: InputEvent, control: Control) -> void:
 			hud_drag_touch = -1
 			control.accept_event()
 	elif event is InputEventScreenDrag and hud_drag_control == control and event.index == hud_drag_touch:
-		control.position = hud_control_start + event.position - hud_drag_start
+		control.position += event.relative
 		control.accept_event()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed and hud_drag_control == null:
 			hud_drag_control = control
-			hud_drag_start = event.position
+			hud_drag_start = Vector2.ZERO
 			hud_control_start = control.position
 		elif not event.pressed and hud_drag_control == control:
 			hud_drag_control = null
 	elif event is InputEventMouseMotion and hud_drag_control == control and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		control.position = hud_control_start + event.position - hud_drag_start
+		control.position += event.relative
 
 func _toggle_hud_edit() -> void:
 	hud_edit_mode = not hud_edit_mode
@@ -781,7 +782,7 @@ func _save_hud_layout() -> void:
 	for index in range(hud_movable_controls.size()):
 		var control := hud_movable_controls[index]
 		if is_instance_valid(control):
-			hud_layout.set_value("controls", control.name, {
+			hud_layout.set_value("controls", str(control.get_meta("hud_layout_key", control.name)), {
 				"position": control.position,
 				"anchor_left": control.anchor_left,
 				"anchor_top": control.anchor_top,
@@ -804,7 +805,7 @@ func _load_hud_layout() -> void:
 	if error != OK:
 		return
 	for control in hud_movable_controls:
-		var data: Variant = hud_layout.get_value("controls", control.name, {})
+		var data: Variant = hud_layout.get_value("controls", str(control.get_meta("hud_layout_key", control.name)), {})
 		if data is Dictionary:
 			control.position = data.get("position", control.position)
 			control.anchor_left = data.get("anchor_left", control.anchor_left)
