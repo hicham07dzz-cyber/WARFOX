@@ -12,6 +12,7 @@ var parachute_pulse := false
 var reload_pulse := false
 var ammo_text: Label
 var reload_button: Button
+var flight_hint: Label
 var health_bar: ProgressBar
 var health_text: Label
 var medkit_button: Button
@@ -123,6 +124,18 @@ func _build_hud() -> void:
 	reload_button.pressed.connect(func(): reload_pulse = true)
 	root.add_child(reload_button)
 
+	flight_hint = Label.new()
+	flight_hint.text = "PARACHUTE DEPLOYED  •  STEER WITH LEFT STICK"
+	flight_hint.anchor_left = 0.5
+	flight_hint.anchor_right = 0.5
+	flight_hint.position = Vector2(-190, 92)
+	flight_hint.size = Vector2(380, 28)
+	flight_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	flight_hint.add_theme_color_override("font_color", Color(1.0, 0.68, 0.25))
+	flight_hint.add_theme_font_size_override("font_size", 15)
+	flight_hint.visible = false
+	root.add_child(flight_hint)
+
 	var mode := Label.new()
 	mode.text = "ISLAND TEST  •  THIRD PERSON"
 	mode.position = Vector2(25, 50)
@@ -226,6 +239,8 @@ func _build_hud() -> void:
 func _process(_delta: float) -> void:
 	if player != null:
 		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse, heal_pulse, parachute_pulse, reload_pulse)
+		if flight_hint != null:
+			flight_hint.visible = player.parachute_deployed
 		if health_bar != null:
 			health_bar.value = player.health
 			health_text.text = "HP " + str(player.health) + " / 100"
