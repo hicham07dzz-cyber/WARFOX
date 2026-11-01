@@ -351,7 +351,19 @@ func _spawn_loot() -> void:
 		{"type": "ammo", "amount": 90, "position": Vector2(-235, -80)},
 		{"type": "medkit", "amount": 1, "position": Vector2(245, 115)},
 		{"type": "ammo", "amount": 60, "position": Vector2(60, 300)},
-		{"type": "medkit", "amount": 2, "position": Vector2(-330, 210)}
+		{"type": "medkit", "amount": 2, "position": Vector2(-330, 210)},
+		{"type": "ammo", "amount": 90, "position": Vector2(360, -180)},
+		{"type": "medkit", "amount": 1, "position": Vector2(325, -215)},
+		{"type": "ammo", "amount": 60, "position": Vector2(-410, -230)},
+		{"type": "medkit", "amount": 1, "position": Vector2(-375, -265)},
+		{"type": "ammo", "amount": 90, "position": Vector2(150, -390)},
+		{"type": "medkit", "amount": 2, "position": Vector2(190, -360)},
+		{"type": "ammo", "amount": 60, "position": Vector2(-150, 350)},
+		{"type": "medkit", "amount": 1, "position": Vector2(-120, 375)},
+		{"type": "ammo", "amount": 90, "position": Vector2(410, 220)},
+		{"type": "medkit", "amount": 1, "position": Vector2(390, 250)},
+		{"type": "ammo", "amount": 60, "position": Vector2(-40, -420)},
+		{"type": "medkit", "amount": 2, "position": Vector2(-10, -390)}
 	]
 	for data in pickups:
 		var pickup := Area3D.new()
