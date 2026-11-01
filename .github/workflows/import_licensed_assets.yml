@@ -1,0 +1,38 @@
+name: Import licensed 3D environment assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/import_licensed_assets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download CC0 Kenney nature models
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://raw.githubusercontent.com/Hidencod/tge-assets/main/packs/nature-kit"
+          mkdir -p assets/environment/nature
+          for file in tree-pinetalla-detailed.glb tree-pinetallb-detailed.glb tree-oak.glb tree-palmdetailedtall.glb rock-largea.glb rock-largeb.glb rock-largec.glb rock-larged.glb plant-bushdetailed.glb plant-bushlarge.glb; do
+            curl --fail --location --retry 3 "$BASE/$file" -o "assets/environment/nature/$file"
+          done
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/Hidencod/tge-assets/main/LICENSE" -o "assets/environment/CC0-LICENSE.txt"
+          printf '%s\n' '# WARFOX environment assets' 'Kenney Nature Kit models in nature/.' 'Original pack: https://kenney.nl/assets/nature-kit' 'License: Creative Commons CC0 1.0.' 'Mirror: https://github.com/Hidencod/tge-assets' > assets/environment/SOURCES.md
+      - name: Commit imported models
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/environment
+          if ! git diff --cached --quiet; then
+            git commit -m "Import licensed CC0 3D environment models"
+            git push
+          fi
