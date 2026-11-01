@@ -13,7 +13,9 @@ The current prototype includes:
 - A SpringArm camera to help prevent the camera from passing through nearby geometry.
 - An arcade raycast firing system with a centered reticle and mobile fire button.
 - Three training targets with health values, hit feedback, and automatic respawn.
-- Mobile joystick and touch buttons for movement, sprint, jump, and crouch.
+- Mobile joystick and touch buttons for movement, sprint, jump, crouch, and firing.
+- Right-side touch-drag camera aiming, with movement direction relative to the camera.
+- Desktop right-mouse camera look support.
 
 ## Important status
 
@@ -36,7 +38,7 @@ This is an early playable foundation, not a finished Battle Royale game. The cha
 
 ## Development roadmap
 
-1. Test player movement, terrain collision, and building collision on Android.
+1. Test player movement, camera aiming, terrain collision, and building collision on Android.
 2. Fix any clipping, collision, camera, or touch-control bugs found during testing.
 3. Expand the weapon sandbox with weapon selection, reload, and polished hit feedback.
 4. Add animated player and bot characters with navigation and combat AI.
