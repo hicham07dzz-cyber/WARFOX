@@ -6,6 +6,8 @@ var health := MAX_HEALTH
 var respawning := false
 var visual: MeshInstance3D
 var health_label: Label3D
+var target_material: StandardMaterial3D
+var hit_flash_time := 0.0
 
 func _ready() -> void:
 	_build_target()
@@ -26,10 +28,10 @@ func _build_target() -> void:
 	mesh.height = 1.85
 	visual.mesh = mesh
 	visual.position.y = 0.95
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.78, 0.24, 0.12)
-	material.roughness = 0.8
-	visual.material_override = material
+	target_material = StandardMaterial3D.new()
+	target_material.albedo_color = Color(0.78, 0.24, 0.12)
+	target_material.roughness = 0.8
+	visual.material_override = target_material
 	add_child(visual)
 
 	var plate := MeshInstance3D.new()
@@ -50,10 +52,18 @@ func _build_target() -> void:
 	health_label.modulate = Color(1.0, 0.85, 0.65)
 	add_child(health_label)
 
+func _process(delta: float) -> void:
+	if hit_flash_time > 0.0:
+		hit_flash_time = maxf(0.0, hit_flash_time - delta)
+		var blend := hit_flash_time / 0.12
+		target_material.albedo_color = Color(1.0, 0.82, 0.68).lerp(Color(0.78, 0.24, 0.12), 1.0 - blend)
+
 func receive_hit(damage: int) -> void:
 	if respawning:
 		return
 	health = maxi(0, health - damage)
+	hit_flash_time = 0.12
+	target_material.albedo_color = Color(1.0, 0.82, 0.68)
 	health_label.text = str(health) + " HP"
 	if health == 0:
 		respawning = true
@@ -67,5 +77,6 @@ func _respawn() -> void:
 	health = MAX_HEALTH
 	respawning = false
 	visual.visible = true
+	target_material.albedo_color = Color(0.78, 0.24, 0.12)
 	health_label.text = "100 HP"
 	set_collision_layer_value(1, true)
