@@ -158,7 +158,8 @@ func _apply_skin_palette(skin_name: String) -> void:
 			accent_color = Color(0.12, 1.0, 0.72)
 			helmet_color = Color(0.025, 0.06, 0.09)
 	if black_fox_skin != null:
-		black_fox_skin.visible = skin_name == "BLACK FOX"
+		black_fox_skin.visible = skin_name.begins_with("BLACK FOX")
+		_apply_black_fox_variant(skin_name)
 	if fox_spirit != null:
 		fox_spirit.visible = skin_name == "BLACK FOX" and fox_spirit.get_meta("spirit_active", false)
 	var armor_mat := _material(armor_color, 0.32, 0.48)
@@ -349,6 +350,28 @@ func _build_visual() -> void:
 	canopy.material_override = canopy_mat
 	parachute_visual.add_child(canopy)
 
+
+
+func _apply_black_fox_variant(skin_name: String) -> void:
+	var glow := Color(1.0, 0.015, 0.025)
+	match skin_name:
+		"BLACK FOX BLUE":
+			glow = Color(0.025, 0.30, 1.0)
+		"BLACK FOX GOLD":
+			glow = Color(1.0, 0.42, 0.015)
+		"BLACK FOX PURPLE":
+			glow = Color(0.62, 0.04, 1.0)
+	var glow_mat := StandardMaterial3D.new()
+	glow_mat.albedo_color = glow
+	glow_mat.metallic = 0.22
+	glow_mat.roughness = 0.3
+	glow_mat.emission_enabled = true
+	glow_mat.emission = glow
+	glow_mat.emission_energy_multiplier = 2.4
+	for node in black_fox_skin.find_children("*", "MeshInstance3D", true, false):
+		var part := node as MeshInstance3D
+		if part.name.contains("Eye") or part.name.contains("Line") or part.name.contains("Edge") or part.name.contains("Crest") or part.name.contains("Piping") or part.name.contains("Emblem") or part.name.contains("Trim") or part.name.contains("Seam"):
+			part.material_override = glow_mat
 
 func _build_black_fox_skin() -> void:
 	black_fox_skin = Node3D.new()
