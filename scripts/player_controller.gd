@@ -45,6 +45,7 @@ var healing := false
 var medkits := 3
 var heal_time := 0.0
 var parachute_deployed := false
+var landing_roll_time := 0.0
 var parachute_visual: Node3D
 var medkit_visual: MeshInstance3D
 var medkit_cross: MeshInstance3D
@@ -394,6 +395,14 @@ func _update_character_animation(delta: float) -> void:
 	if is_knocked_out:
 		visual_root.rotation.x = lerp(visual_root.rotation.x, -1.0, delta * 5.0)
 		return
+	if landing_roll_time > 0.0:
+		landing_roll_time = maxf(0.0, landing_roll_time - delta)
+		visual_root.rotation.x = sin((0.65 - landing_roll_time) / 0.65 * PI) * 0.72
+		left_arm_pivot.rotation.x = -1.0
+		right_arm_pivot.rotation.x = -1.0
+		left_leg_pivot.rotation.x = 0.75
+		right_leg_pivot.rotation.x = 0.75
+		return
 	visual_root.rotation.x = move_toward(visual_root.rotation.x, 0.0, delta * 5.0)
 	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
 	var moving := horizontal_speed > 0.35 and is_on_floor() and not healing
@@ -438,13 +447,16 @@ func _update_character_animation(delta: float) -> void:
 	if not is_reloading and weapon_root != null:
 		weapon_root.rotation.x = move_toward(weapon_root.rotation.x, 0.0, delta * 4.0)
 	if parachute_deployed:
+		visual_root.rotation.z = lerp(visual_root.rotation.z, -move_input.x * 0.16, delta * 3.0)
 		left_arm_pivot.rotation.z = -0.65
 		right_arm_pivot.rotation.z = 0.65
 		velocity.y = maxf(velocity.y, -3.2)
 		if is_on_floor():
 			parachute_deployed = false
 			parachute_visual.visible = false
+			landing_roll_time = 0.65
 	else:
+		visual_root.rotation.z = move_toward(visual_root.rotation.z, 0.0, delta * 4.0)
 		left_arm_pivot.rotation.z = move_toward(left_arm_pivot.rotation.z, 0.0, delta * 5.0)
 		right_arm_pivot.rotation.z = move_toward(right_arm_pivot.rotation.z, 0.0, delta * 5.0)
 
@@ -486,11 +498,15 @@ func _physics_process(delta: float) -> void:
 
 	var is_crouched := crouching or Input.is_action_pressed("crouch")
 	var speed := CROUCH_SPEED if is_crouched else (SPRINT_SPEED if sprinting or Input.is_action_pressed("sprint") else WALK_SPEED)
+	if parachute_deployed:
+		speed = 7.8
+		var wind_drift := Vector3(sin(animation_clock * 0.7) * 0.35, 0.0, cos(animation_clock * 0.55) * 0.25)
+		direction = (direction + wind_drift).normalized() if direction.length() > 0.01 else wind_drift
 	var target_x := direction.x * speed
 	var target_z := direction.z * speed
 	var rate := ACCELERATION if direction.length() > 0.01 else DECELERATION
-	velocity.x = move_toward(velocity.x, target_x, rate * delta)
-	velocity.z = move_toward(velocity.z, target_z, rate * delta)
+	velocity.x = move_toward(velocity.x, target_x, (ACCELERATION * 0.72 if parachute_deployed else rate) * delta)
+	velocity.z = move_toward(velocity.z, target_z, (ACCELERATION * 0.72 if parachute_deployed else rate) * delta)
 
 	if direction.length() > 0.01:
 		var target_yaw := atan2(-direction.x, -direction.z)
