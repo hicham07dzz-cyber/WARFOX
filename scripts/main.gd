@@ -18,6 +18,7 @@ func _ready() -> void:
 	_build_transport_plane()
 	_spawn_training_targets()
 	_spawn_bots()
+	_spawn_loot()
 	_build_hud()
 
 func _setup_input() -> void:
@@ -275,3 +276,25 @@ func _process(delta: float) -> void:
 		match_player.deploy_parachute()
 	if match_intro_time >= 9.0:
 		transport_plane.visible = false
+
+
+func _spawn_loot() -> void:
+	var loot_script = load("res://scripts/loot_pickup.gd")
+	var pickups := [
+		{"type": "ammo", "amount": 60, "position": Vector2(-18, 42)},
+		{"type": "medkit", "amount": 2, "position": Vector2(-25, 48)},
+		{"type": "ammo", "amount": 60, "position": Vector2(18, 42)},
+		{"type": "medkit", "amount": 2, "position": Vector2(25, 48)},
+		{"type": "ammo", "amount": 90, "position": Vector2(-235, -80)},
+		{"type": "medkit", "amount": 1, "position": Vector2(245, 115)},
+		{"type": "ammo", "amount": 60, "position": Vector2(60, 300)},
+		{"type": "medkit", "amount": 2, "position": Vector2(-330, 210)}
+	]
+	for data in pickups:
+		var pickup := Area3D.new()
+		pickup.set_script(loot_script)
+		pickup.pickup_type = data["type"]
+		pickup.amount = data["amount"]
+		var point: Vector2 = data["position"]
+		pickup.position = Vector3(point.x, _height_at(point.x, point.y) + 0.9, point.y)
+		add_child(pickup)
