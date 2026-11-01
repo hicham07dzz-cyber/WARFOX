@@ -9,6 +9,9 @@ var jump_pulse := false
 var fire_pulse := false
 var heal_pulse := false
 var parachute_pulse := false
+var reload_pulse := false
+var ammo_text: Label
+var reload_button: Button
 var health_bar: ProgressBar
 var health_text: Label
 var medkit_button: Button
@@ -93,6 +96,32 @@ func _build_hud() -> void:
 	bar_bg.bg_color = Color(0.04, 0.06, 0.07, 0.8)
 	health_bar.add_theme_stylebox_override("background", bar_bg)
 	root.add_child(health_bar)
+
+	ammo_text = Label.new()
+	ammo_text.text = "AMMO 30 / 120"
+	ammo_text.anchor_left = 1.0
+	ammo_text.anchor_right = 1.0
+	ammo_text.anchor_top = 1.0
+	ammo_text.anchor_bottom = 1.0
+	ammo_text.position = Vector2(-245, -330)
+	ammo_text.size = Vector2(220, 28)
+	ammo_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	ammo_text.add_theme_color_override("font_color", Color(1.0, 0.88, 0.62))
+	ammo_text.add_theme_font_size_override("font_size", 17)
+	root.add_child(ammo_text)
+
+	reload_button = Button.new()
+	reload_button.text = "RELOAD"
+	reload_button.size = Vector2(92, 48)
+	reload_button.anchor_left = 1.0
+	reload_button.anchor_top = 1.0
+	reload_button.anchor_right = 1.0
+	reload_button.anchor_bottom = 1.0
+	reload_button.position = Vector2(-350, -222)
+	reload_button.add_theme_font_size_override("font_size", 14)
+	_style_button(reload_button, Color(0.35, 0.30, 0.12))
+	reload_button.pressed.connect(func(): reload_pulse = true)
+	root.add_child(reload_button)
 
 	var mode := Label.new()
 	mode.text = "ISLAND TEST  •  THIRD PERSON"
@@ -196,10 +225,14 @@ func _build_hud() -> void:
 
 func _process(_delta: float) -> void:
 	if player != null:
-		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse, heal_pulse, parachute_pulse)
+		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse, heal_pulse, parachute_pulse, reload_pulse)
 		if health_bar != null:
 			health_bar.value = player.health
 			health_text.text = "HP " + str(player.health) + " / 100"
+		if ammo_text != null:
+			ammo_text.text = "AMMO " + str(player.ammo) + " / " + str(player.reserve_ammo) + ("  •  RELOADING" if player.is_reloading else "")
+		if reload_button != null:
+			reload_button.disabled = player.is_reloading or player.ammo >= player.MAGAZINE_SIZE or player.reserve_ammo <= 0
 		if medkit_button != null:
 			medkit_button.text = "MEDKIT x" + str(player.medkits)
 			medkit_button.disabled = player.medkits <= 0 or player.health >= 100 or player.healing
@@ -207,6 +240,7 @@ func _process(_delta: float) -> void:
 	fire_pulse = false
 	heal_pulse = false
 	parachute_pulse = false
+	reload_pulse = false
 
 class TouchStick extends Control:
 	signal stick_changed(value: Vector2)
