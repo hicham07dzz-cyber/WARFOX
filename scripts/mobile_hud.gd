@@ -393,6 +393,8 @@ func _change_loadout(direction: int, change_skin: bool) -> void:
 	else:
 		weapon_index = posmod(weapon_index + direction, names.size())
 		account_manager.call("equip_weapon", str(names[weapon_index]))
+	if player != null and player.has_method("apply_equipped_loadout"):
+		player.apply_equipped_loadout(account_manager)
 	_refresh_armory()
 
 func _refresh_armory() -> void:
