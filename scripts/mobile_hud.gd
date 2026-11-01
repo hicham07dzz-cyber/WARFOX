@@ -7,6 +7,8 @@ var sprint_active := false
 var crouch_active := false
 var jump_pulse := false
 var fire_pulse := false
+var heal_pulse := false
+var parachute_pulse := false
 var health_bar: ProgressBar
 var health_text: Label
 
@@ -132,6 +134,32 @@ func _build_hud() -> void:
 	fire.button_down.connect(func(): fire_pulse = true)
 	root.add_child(fire)
 
+	var medkit := Button.new()
+	medkit.text = "MEDKIT"
+	medkit.size = Vector2(104, 52)
+	medkit.anchor_left = 1.0
+	medkit.anchor_top = 1.0
+	medkit.anchor_right = 1.0
+	medkit.anchor_bottom = 1.0
+	medkit.position = Vector2(-126, -270)
+	medkit.add_theme_font_size_override("font_size", 15)
+	_style_button(medkit, Color(0.16, 0.48, 0.28))
+	medkit.pressed.connect(func(): heal_pulse = true)
+	root.add_child(medkit)
+
+	var chute := Button.new()
+	chute.text = "CHUTE"
+	chute.size = Vector2(92, 48)
+	chute.anchor_left = 1.0
+	chute.anchor_top = 1.0
+	chute.anchor_right = 1.0
+	chute.anchor_bottom = 1.0
+	chute.position = Vector2(-238, -222)
+	chute.add_theme_font_size_override("font_size", 15)
+	_style_button(chute, Color(0.12, 0.34, 0.52))
+	chute.pressed.connect(func(): parachute_pulse = true)
+	root.add_child(chute)
+
 	var sprint := Button.new()
 	sprint.text = "RUN"
 	sprint.size = Vector2(88, 54)
@@ -167,12 +195,14 @@ func _build_hud() -> void:
 
 func _process(_delta: float) -> void:
 	if player != null:
-		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse)
+		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse, heal_pulse, parachute_pulse)
 		if health_bar != null:
 			health_bar.value = player.health
 			health_text.text = "HP " + str(player.health) + " / 100"
 	jump_pulse = false
 	fire_pulse = false
+	heal_pulse = false
+	parachute_pulse = false
 
 class TouchStick extends Control:
 	signal stick_changed(value: Vector2)
