@@ -25,6 +25,8 @@ var weapon_name_label: Label
 var account_manager: Node
 var skin_index := 0
 var weapon_index := 0
+var pause_panel: PanelContainer
+var pause_button: Button
 
 func _ready() -> void:
 	_build_hud()
@@ -279,6 +281,7 @@ func _build_hud() -> void:
 	joystick.stick_changed.connect(func(value: Vector2): joystick_vector = value)
 	root.add_child(joystick)
 	_build_armory_panel(root)
+	_build_pause_panel(root)
 
 func _build_armory_panel(root: Control) -> void:
 	var world := get_tree().current_scene
@@ -560,3 +563,92 @@ class MiniRadar extends Control:
 				draw_rect(Rect2(map_point - Vector2(3, 3), Vector2(6, 6)), loot_color)
 		draw_colored_polygon(PackedVector2Array([center + Vector2(0, -9), center + Vector2(-6, 6), center + Vector2(6, 6)]), Color(0.95, 0.98, 1.0))
 		draw_string(ThemeDB.fallback_font, Vector2(67, 15), "N", HORIZONTAL_ALIGNMENT_CENTER, -1, 10, Color(0.9, 0.95, 1.0, 0.9))
+
+
+func _build_pause_panel(root: Control) -> void:
+	pause_button = Button.new()
+	pause_button.text = "Ⅱ"
+	pause_button.tooltip_text = "PAUSE"
+	pause_button.size = Vector2(54, 46)
+	pause_button.anchor_left = 0.5
+	pause_button.anchor_right = 0.5
+	pause_button.position = Vector2(-27, 18)
+	pause_button.add_theme_font_size_override("font_size", 22)
+	_style_button(pause_button, Color(0.18, 0.25, 0.30))
+	pause_button.pressed.connect(_toggle_pause)
+	root.add_child(pause_button)
+
+	pause_panel = PanelContainer.new()
+	pause_panel.name = "WARFOX_Pause_Panel"
+	pause_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	pause_panel.position = Vector2(-170, -142)
+	pause_panel.size = Vector2(340, 284)
+	pause_panel.custom_minimum_size = Vector2(340, 284)
+	pause_panel.visible = false
+	pause_panel.process_mode = Node.PROCESS_MODE_ALWAYS
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.018, 0.032, 0.045, 0.97)
+	panel_style.border_color = Color(1.0, 0.42, 0.10, 0.96)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(18)
+	panel_style.content_margin_left = 22
+	panel_style.content_margin_right = 22
+	panel_style.content_margin_top = 20
+	panel_style.content_margin_bottom = 20
+	pause_panel.add_theme_stylebox_override("panel", panel_style)
+	root.add_child(pause_panel)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 14)
+	pause_panel.add_child(content)
+
+	var heading := Label.new()
+	heading.text = "WARFOX  //  PAUSED"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_color_override("font_color", Color(1.0, 0.48, 0.14))
+	heading.add_theme_font_size_override("font_size", 22)
+	content.add_child(heading)
+
+	var subtitle := Label.new()
+	subtitle.text = "Take a moment. Your session is paused."
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_color_override("font_color", Color(0.76, 0.84, 0.88))
+	subtitle.add_theme_font_size_override("font_size", 13)
+	content.add_child(subtitle)
+
+	var resume := Button.new()
+	resume.text = "RESUME SESSION"
+	resume.custom_minimum_size = Vector2(0, 52)
+	resume.add_theme_font_size_override("font_size", 17)
+	_style_button(resume, Color(0.12, 0.42, 0.28))
+	resume.pressed.connect(_resume_session)
+	content.add_child(resume)
+
+	var close_armory := Button.new()
+	close_armory.text = "CLOSE OPEN PANELS"
+	close_armory.custom_minimum_size = Vector2(0, 44)
+	_style_button(close_armory, Color(0.18, 0.27, 0.32))
+	close_armory.pressed.connect(func():
+		if account_panel != null:
+			account_panel.visible = false
+		_resume_session()
+	)
+	content.add_child(close_armory)
+
+func _toggle_pause() -> void:
+	if pause_panel == null:
+		return
+	var should_pause := not get_tree().paused
+	pause_panel.visible = should_pause
+	get_tree().paused = should_pause
+	if should_pause and account_panel != null:
+		account_panel.visible = false
+
+func _resume_session() -> void:
+	if pause_panel != null:
+		pause_panel.visible = false
+	get_tree().paused = false
+
+
+func _exit_tree() -> void:
+	get_tree().paused = false
