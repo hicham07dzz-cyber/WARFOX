@@ -164,11 +164,11 @@ func _apply_skin_palette(skin_name: String) -> void:
 			part.material_override = fabric_mat
 		elif part.name in ["Forearm_Guard", "Boot_Leg", "Boot", "Belt", "Backpack", "Helmet", "Left_Shoulder_Pad", "Right_Shoulder_Pad", "Knee_Guard_Left", "Knee_Guard_Right", "Backpack_Flap", "Helmet_Side_Left", "Helmet_Side_Right"]:
 			part.material_override = helmet_mat
-		elif part.name in ["Chest_Insignia", "Helmet_Visor", "Shoulder_Patch", "Radio_Antenna", "Helmet_Rear_Ridge"]:
+		elif part.name in ["Chest_Insignia", "Helmet_Visor", "Shoulder_Patch", "Radio_Antenna", "Helmet_Rear_Ridge", "Shoulder_Trim_Left", "Shoulder_Trim_Right", "Chest_Center_Buckle", "Knee_Stripe_Left", "Knee_Stripe_Right"]:
 			part.material_override = accent_mat
-		elif part.name in ["Chest_Pouch_Left", "Chest_Pouch_Right", "Chest_Radio"]:
+		elif part.name in ["Chest_Pouch_Left", "Chest_Pouch_Right", "Chest_Radio", "Helmet_Comms_Left", "Helmet_Comms_Right", "Helmet_Front_Brim", "Chest_Lower_Armor", "Waist_Utility_Belt", "Elbow_Guard_Left", "Elbow_Guard_Right"]:
 			part.material_override = dark
-		elif part.name in ["Belt_Pouch_Left", "Belt_Pouch_Right"]:
+		elif part.name in ["Belt_Pouch_Left", "Belt_Pouch_Right", "Neck_Gaiter", "Backpack_Side_Left", "Backpack_Side_Right", "Chest_Straps_Left", "Chest_Straps_Right", "Thigh_Plate_Left", "Thigh_Plate_Right"]:
 			part.material_override = fabric_mat
 
 func _apply_weapon_palette(weapon_name: String) -> void:
@@ -274,6 +274,45 @@ func _build_visual() -> void:
 	_add_capsule(right_leg_pivot, "Thigh", 0.17, 0.52, Vector3(0, -0.22, 0), fabric)
 	_add_capsule(right_leg_pivot, "Boot_Leg", 0.135, 0.43, Vector3(0, -0.57, -0.035), dark)
 	_add_box(right_leg_pivot, "Boot", Vector3(0.27, 0.13, 0.40), Vector3(0, -0.74, -0.09), dark)
+
+	# Extra silhouette and material details for a more finished operator model.
+	var trim := _material(Color(0.055, 0.075, 0.082), 0.38, 0.42)
+	var rubber := _material(Color(0.018, 0.024, 0.028), 0.04, 0.9)
+	var fabric_detail := _material(Color(0.18, 0.22, 0.20), 0.02, 0.86)
+	var lens := StandardMaterial3D.new()
+	lens.albedo_color = Color(0.08, 0.62, 0.76)
+	lens.metallic = 0.25
+	lens.roughness = 0.22
+	lens.emission_enabled = true
+	lens.emission = Color(0.015, 0.18, 0.24)
+	lens.emission_energy_multiplier = 0.65
+
+	_add_capsule(visual_root, "Neck_Gaiter", 0.14, 0.20, Vector3(0, 1.58, 0), fabric_detail)
+	_add_box(visual_root, "Chest_Lower_Armor", Vector3(0.42, 0.12, 0.055), Vector3(0, 1.13, -0.22), trim)
+	_add_box(visual_root, "Chest_Center_Buckle", Vector3(0.10, 0.10, 0.035), Vector3(0, 0.91, -0.205), accent)
+	_add_box(visual_root, "Waist_Utility_Belt", Vector3(0.70, 0.075, 0.39), Vector3(0, 0.78, 0), trim)
+	_add_box(visual_root, "Backpack_Side_Left", Vector3(0.13, 0.38, 0.15), Vector3(-0.29, 1.22, 0.28), fabric_detail)
+	_add_box(visual_root, "Backpack_Side_Right", Vector3(0.13, 0.38, 0.15), Vector3(0.29, 1.22, 0.28), fabric_detail)
+	_add_box(visual_root, "Helmet_Front_Brim", Vector3(0.42, 0.045, 0.16), Vector3(0, 1.93, -0.20), trim)
+	_add_box(visual_root, "Helmet_Visor_Lens", Vector3(0.25, 0.035, 0.018), Vector3(0, 1.91, -0.242), lens)
+	_add_box(visual_root, "Helmet_Comms_Left", Vector3(0.09, 0.13, 0.13), Vector3(-0.27, 1.88, 0.035), trim)
+	_add_box(visual_root, "Helmet_Comms_Right", Vector3(0.09, 0.13, 0.13), Vector3(0.27, 1.88, 0.035), trim)
+	_add_box(visual_root, "Shoulder_Trim_Left", Vector3(0.25, 0.045, 0.29), Vector3(-0.43, 1.58, -0.015), accent)
+	_add_box(visual_root, "Shoulder_Trim_Right", Vector3(0.25, 0.045, 0.29), Vector3(0.43, 1.58, -0.015), accent)
+	_add_box(visual_root, "Chest_Straps_Left", Vector3(0.055, 0.32, 0.035), Vector3(-0.12, 1.25, -0.238), fabric_detail)
+	_add_box(visual_root, "Chest_Straps_Right", Vector3(0.055, 0.32, 0.035), Vector3(0.12, 1.25, -0.238), fabric_detail)
+	_add_box(visual_root, "Thigh_Plate_Left", Vector3(0.24, 0.20, 0.10), Vector3(-0.19, 0.61, -0.12), armor)
+	_add_box(visual_root, "Thigh_Plate_Right", Vector3(0.24, 0.20, 0.10), Vector3(0.19, 0.61, -0.12), armor)
+	_add_box(visual_root, "Boot_Toe_Left", Vector3(0.28, 0.11, 0.16), Vector3(-0.19, 0.075, -0.25), rubber)
+	_add_box(visual_root, "Boot_Toe_Right", Vector3(0.28, 0.11, 0.16), Vector3(0.19, 0.075, -0.25), rubber)
+	_add_box(visual_root, "Boot_Sole_Left", Vector3(0.29, 0.045, 0.42), Vector3(-0.19, 0.025, -0.07), trim)
+	_add_box(visual_root, "Boot_Sole_Right", Vector3(0.29, 0.045, 0.42), Vector3(0.19, 0.025, -0.07), trim)
+	_add_box(left_arm_pivot, "Elbow_Guard_Left", Vector3(0.20, 0.15, 0.16), Vector3(0, -0.40, -0.01), trim)
+	_add_box(right_arm_pivot, "Elbow_Guard_Right", Vector3(0.20, 0.15, 0.16), Vector3(0, -0.40, -0.01), trim)
+	_add_box(left_arm_pivot, "Glove_Left", Vector3(0.19, 0.16, 0.17), Vector3(0.015, -0.76, -0.02), rubber)
+	_add_box(right_arm_pivot, "Glove_Right", Vector3(0.19, 0.16, 0.17), Vector3(-0.015, -0.76, -0.02), rubber)
+	_add_box(visual_root, "Knee_Stripe_Left", Vector3(0.17, 0.035, 0.025), Vector3(-0.19, 0.40, -0.211), accent)
+	_add_box(visual_root, "Knee_Stripe_Right", Vector3(0.17, 0.035, 0.025), Vector3(0.19, 0.40, -0.211), accent)
 
 	medkit_visual = _add_box(right_arm_pivot, "Medkit", Vector3(0.22, 0.18, 0.16), Vector3(0, -0.78, -0.12), _material(Color(0.82, 0.84, 0.78)))
 	medkit_visual.visible = false
