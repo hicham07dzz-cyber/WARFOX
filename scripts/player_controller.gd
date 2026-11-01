@@ -14,7 +14,17 @@ var sprinting := false
 var crouching := false
 var jump_requested := false
 var fire_requested := false
+var reload_requested := false
 var fire_cooldown := 0.0
+const MAGAZINE_SIZE := 30
+var ammo := MAGAZINE_SIZE
+var reserve_ammo := 120
+var is_reloading := false
+var reload_time := 0.0
+var weapon_root: Node3D
+var magazine_visual: MeshInstance3D
+var reload_animation_time := 0.0
+var fox_spirit: Node3D
 const FIRE_INTERVAL := 0.22
 const HIT_DAMAGE := 25
 var camera_pivot: Node3D
@@ -49,6 +59,8 @@ func _ready() -> void:
 	floor_max_angle = deg_to_rad(48.0)
 	_build_collision()
 	_build_visual()
+	_build_weapon()
+	_build_fox_spirit()
 	_build_camera()
 	spawn_position = global_position
 	add_to_group("warfox_player")
@@ -167,6 +179,72 @@ func _build_visual() -> void:
 	canopy.material_override = canopy_mat
 	parachute_visual.add_child(canopy)
 
+func _build_weapon() -> void:
+	weapon_root = Node3D.new()
+	weapon_root.name = "WARFOX_Assault_Rifle"
+	weapon_root.position = Vector3(0.02, -0.52, -0.22)
+	right_arm_pivot.add_child(weapon_root)
+	var gun_dark := _material(Color(0.035, 0.045, 0.052), 0.55, 0.34)
+	var gun_metal := _material(Color(0.16, 0.19, 0.20), 0.72, 0.28)
+	var red := _material(Color(0.92, 0.12, 0.045), 0.28, 0.36)
+	_add_box(weapon_root, "Rifle_Receiver", Vector3(0.16, 0.18, 0.62), Vector3(0, 0, -0.08), gun_metal)
+	_add_box(weapon_root, "Rifle_Handguard", Vector3(0.13, 0.14, 0.40), Vector3(0, 0.015, -0.52), gun_dark)
+	_add_box(weapon_root, "Rifle_Stock", Vector3(0.13, 0.16, 0.32), Vector3(0, 0.015, 0.38), gun_dark)
+	_add_box(weapon_root, "Rifle_Grip", Vector3(0.10, 0.23, 0.12), Vector3(0, -0.18, 0.08), gun_dark)
+	_add_box(weapon_root, "Rifle_Sight", Vector3(0.11, 0.09, 0.16), Vector3(0, 0.13, -0.05), gun_dark)
+	_add_box(weapon_root, "Rifle_Sight_Glow", Vector3(0.035, 0.025, 0.035), Vector3(0, 0.19, -0.05), red)
+	var barrel := MeshInstance3D.new()
+	barrel.name = "Rifle_Barrel"
+	var barrel_mesh := CylinderMesh.new()
+	barrel_mesh.top_radius = 0.035
+	barrel_mesh.bottom_radius = 0.035
+	barrel_mesh.height = 0.58
+	barrel.mesh = barrel_mesh
+	barrel.rotation.x = PI * 0.5
+	barrel.position = Vector3(0, 0.015, -0.91)
+	barrel.material_override = gun_metal
+	weapon_root.add_child(barrel)
+	magazine_visual = _add_box(weapon_root, "Detachable_Magazine", Vector3(0.11, 0.25, 0.15), Vector3(0, -0.20, -0.03), gun_dark)
+	_add_box(weapon_root, "Magazine_Red_Stripe", Vector3(0.115, 0.035, 0.16), Vector3(0, -0.19, -0.03), red)
+
+func _build_fox_spirit() -> void:
+	fox_spirit = Node3D.new()
+	fox_spirit.name = "Shoulder_Fox_Spirit"
+	fox_spirit.position = Vector3(-0.50, 1.66, -0.02)
+	fox_spirit.visible = false
+	visual_root.add_child(fox_spirit)
+	var spirit_mat := StandardMaterial3D.new()
+	spirit_mat.albedo_color = Color(1.0, 0.12, 0.025, 0.78)
+	spirit_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	spirit_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	spirit_mat.emission_enabled = true
+	spirit_mat.emission = Color(1.0, 0.055, 0.008)
+	spirit_mat.emission_energy_multiplier = 2.4
+	var body := _add_capsule(fox_spirit, "Spirit_Body", 0.105, 0.42, Vector3(0, 0, 0), spirit_mat)
+	body.rotation.z = PI * 0.5
+	var head := MeshInstance3D.new()
+	head.name = "Spirit_Fox_Head"
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.13
+	head_mesh.height = 0.24
+	head.mesh = head_mesh
+	head.position = Vector3(0, 0.045, -0.23)
+	head.material_override = spirit_mat
+	fox_spirit.add_child(head)
+	for side in [-1.0, 1.0]:
+		var ear := MeshInstance3D.new()
+		var ear_mesh := ConeMesh.new()
+		ear_mesh.bottom_radius = 0.055
+		ear_mesh.top_radius = 0.0
+		ear_mesh.height = 0.17
+		ear.mesh = ear_mesh
+		ear.position = Vector3(side * 0.075, 0.17, -0.25)
+		ear.material_override = spirit_mat
+		fox_spirit.add_child(ear)
+	var tail := _add_capsule(fox_spirit, "Spirit_Tail", 0.075, 0.42, Vector3(0, 0.10, 0.28), spirit_mat)
+	tail.rotation.x = -0.9
+	tail.rotation.z = 0.55
+
 func _build_camera() -> void:
 	camera_pivot = Node3D.new()
 	camera_pivot.name = "CameraPivot"
@@ -231,7 +309,7 @@ func add_look_delta(delta_pixels: Vector2) -> void:
 	camera_pivot.rotation.y -= delta_pixels.x * LOOK_SENSITIVITY
 	camera_pivot.rotation.x = clampf(camera_pivot.rotation.x - delta_pixels.y * LOOK_SENSITIVITY, MIN_PITCH, MAX_PITCH)
 
-func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool = false, fire: bool = false, heal: bool = false, parachute: bool = false) -> void:
+func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool = false, fire: bool = false, heal: bool = false, parachute: bool = false, reload: bool = false) -> void:
 	move_input = direction.limit_length(1.0)
 	sprinting = sprint
 	crouching = crouch
@@ -241,6 +319,8 @@ func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool
 		start_healing()
 	if parachute:
 		deploy_parachute()
+	if reload:
+		start_reload()
 
 func _set_crouch_state() -> void:
 	var wants_crouch := crouching or Input.is_action_pressed("crouch")
@@ -261,6 +341,12 @@ func _update_character_animation(delta: float) -> void:
 	if visual_root == null:
 		return
 	fire_animation_time = maxf(0.0, fire_animation_time - delta)
+	reload_animation_time = maxf(0.0, reload_animation_time - delta)
+	if fox_spirit != null:
+		var fox_cycle := fposmod(animation_clock, 10.0)
+		fox_spirit.visible = fox_cycle > 5.8 and fox_cycle < 8.5
+		var fox_fade := minf((fox_cycle - 5.8) / 0.35, (8.5 - fox_cycle) / 0.35)
+		fox_spirit.scale = Vector3.ONE * (0.78 + 0.22 * sin(animation_clock * 8.0)) * clampf(fox_fade, 0.0, 1.0)
 	damage_animation_time = maxf(0.0, damage_animation_time - delta)
 	if is_knocked_out:
 		visual_root.rotation.x = lerp(visual_root.rotation.x, -1.0, delta * 5.0)
@@ -284,6 +370,10 @@ func _update_character_animation(delta: float) -> void:
 		right_leg_pivot.rotation.x = -0.25
 	if fire_animation_time > 0.0:
 		right_arm_pivot.rotation.x -= 0.65 * (fire_animation_time / 0.14)
+	if is_reloading:
+		right_arm_pivot.rotation.x = -0.85 + sin(animation_clock * 12.0) * 0.12
+		left_arm_pivot.rotation.x = -0.65 + sin(animation_clock * 12.0) * 0.10
+		weapon_root.rotation.x = sin(animation_clock * 12.0) * 0.08
 	if damage_animation_time > 0.0:
 		left_arm_pivot.rotation.x -= 0.35 * (damage_animation_time / 0.22)
 		right_arm_pivot.rotation.x -= 0.35 * (damage_animation_time / 0.22)
@@ -302,6 +392,8 @@ func _update_character_animation(delta: float) -> void:
 				medkit_visual.visible = false
 			if medkit_cross != null:
 				medkit_cross.visible = false
+	if not is_reloading and weapon_root != null:
+		weapon_root.rotation.x = move_toward(weapon_root.rotation.x, 0.0, delta * 4.0)
 	if parachute_deployed:
 		left_arm_pivot.rotation.z = -0.65
 		right_arm_pivot.rotation.z = 0.65
@@ -318,6 +410,18 @@ func _physics_process(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("heal"):
 		start_healing()
+	if Input.is_action_just_pressed("reload"):
+		start_reload()
+	if is_reloading:
+		reload_time -= delta
+		if reload_time <= 0.0:
+			var needed := MAGAZINE_SIZE - ammo
+			var loaded := mini(needed, reserve_ammo)
+			ammo += loaded
+			reserve_ammo -= loaded
+			is_reloading = false
+			if magazine_visual != null:
+				magazine_visual.visible = true
 	if Input.is_action_just_pressed("parachute"):
 		deploy_parachute()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
@@ -356,9 +460,10 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func _fire_arcade_ray() -> void:
-	if fire_cooldown > 0.0:
+	if fire_cooldown > 0.0 or is_reloading or ammo <= 0:
 		return
 	fire_cooldown = FIRE_INTERVAL
+	ammo -= 1
 	fire_animation_time = 0.14
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
