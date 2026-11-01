@@ -18,6 +18,13 @@ var health_text: Label
 var medkit_button: Button
 var zone_status_label: Label
 var match_stats_label: Label
+var account_panel: PanelContainer
+var account_info_label: Label
+var skin_name_label: Label
+var weapon_name_label: Label
+var account_manager: Node
+var skin_index := 0
+var weapon_index := 0
 
 func _ready() -> void:
 	_build_hud()
@@ -271,6 +278,138 @@ func _build_hud() -> void:
 	joystick.anchor_bottom = 1.0
 	joystick.stick_changed.connect(func(value: Vector2): joystick_vector = value)
 	root.add_child(joystick)
+	_build_armory_panel(root)
+
+func _build_armory_panel(root: Control) -> void:
+	var world := get_tree().current_scene
+	if world != null:
+		account_manager = world.get_node_or_null("WARFOX_Account")
+	var armory_button := Button.new()
+	armory_button.text = "ARMORY"
+	armory_button.position = Vector2(24, 128)
+	armory_button.size = Vector2(112, 42)
+	armory_button.add_theme_font_size_override("font_size", 14)
+	_style_button(armory_button, Color(0.22, 0.30, 0.36))
+	armory_button.pressed.connect(_toggle_armory)
+	root.add_child(armory_button)
+
+	account_panel = PanelContainer.new()
+	account_panel.name = "WARFOX_Armory_Panel"
+	account_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	account_panel.position = Vector2(-190, -205)
+	account_panel.size = Vector2(380, 410)
+	account_panel.custom_minimum_size = Vector2(380, 410)
+	account_panel.visible = false
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.025, 0.045, 0.06, 0.96)
+	panel_style.border_color = Color(1.0, 0.38, 0.08, 0.95)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(16)
+	panel_style.content_margin_left = 18
+	panel_style.content_margin_right = 18
+	panel_style.content_margin_top = 16
+	panel_style.content_margin_bottom = 16
+	account_panel.add_theme_stylebox_override("panel", panel_style)
+	root.add_child(account_panel)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 12)
+	account_panel.add_child(content)
+	var heading := Label.new()
+	heading.text = "WARFOX  //  ELITE ARMORY"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_color_override("font_color", Color(1.0, 0.48, 0.12))
+	heading.add_theme_font_size_override("font_size", 20)
+	content.add_child(heading)
+	account_info_label = Label.new()
+	account_info_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	account_info_label.add_theme_color_override("font_color", Color(0.82, 0.91, 0.94))
+	content.add_child(account_info_label)
+	var skin_title := Label.new()
+	skin_title.text = "OPERATOR SKIN"
+	skin_title.add_theme_color_override("font_color", Color(1.0, 0.72, 0.35))
+	content.add_child(skin_title)
+	skin_name_label = Label.new()
+	skin_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	skin_name_label.add_theme_font_size_override("font_size", 17)
+	content.add_child(skin_name_label)
+	var skin_row := HBoxContainer.new()
+	var skin_prev := Button.new()
+	skin_prev.text = "‹ PREVIOUS"
+	skin_prev.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_button(skin_prev, Color(0.18, 0.27, 0.32))
+	skin_prev.pressed.connect(func(): _change_loadout(-1, true))
+	skin_row.add_child(skin_prev)
+	var skin_next := Button.new()
+	skin_next.text = "NEXT ›"
+	skin_next.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_button(skin_next, Color(0.18, 0.27, 0.32))
+	skin_next.pressed.connect(func(): _change_loadout(1, true))
+	skin_row.add_child(skin_next)
+	content.add_child(skin_row)
+	var weapon_title := Label.new()
+	weapon_title.text = "PRIMARY WEAPON"
+	weapon_title.add_theme_color_override("font_color", Color(1.0, 0.72, 0.35))
+	content.add_child(weapon_title)
+	weapon_name_label = Label.new()
+	weapon_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	weapon_name_label.add_theme_font_size_override("font_size", 17)
+	content.add_child(weapon_name_label)
+	var weapon_row := HBoxContainer.new()
+	var weapon_prev := Button.new()
+	weapon_prev.text = "‹ PREVIOUS"
+	weapon_prev.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_button(weapon_prev, Color(0.18, 0.27, 0.32))
+	weapon_prev.pressed.connect(func(): _change_loadout(-1, false))
+	weapon_row.add_child(weapon_prev)
+	var weapon_next := Button.new()
+	weapon_next.text = "NEXT ›"
+	weapon_next.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_style_button(weapon_next, Color(0.18, 0.27, 0.32))
+	weapon_next.pressed.connect(func(): _change_loadout(1, false))
+	weapon_row.add_child(weapon_next)
+	content.add_child(weapon_row)
+	var close_button := Button.new()
+	close_button.text = "CLOSE ARMORY"
+	_style_button(close_button, Color(0.55, 0.16, 0.08))
+	close_button.pressed.connect(_toggle_armory)
+	content.add_child(close_button)
+	_refresh_armory()
+
+func _toggle_armory() -> void:
+	if account_panel != null:
+		account_panel.visible = not account_panel.visible
+		_refresh_armory()
+
+func _change_loadout(direction: int, change_skin: bool) -> void:
+	if account_manager == null:
+		return
+	var names: Array = account_manager.get("owned_skins") if change_skin else account_manager.get("owned_weapons")
+	if names.is_empty():
+		return
+	if change_skin:
+		skin_index = posmod(skin_index + direction, names.size())
+		account_manager.call("equip_skin", str(names[skin_index]))
+	else:
+		weapon_index = posmod(weapon_index + direction, names.size())
+		account_manager.call("equip_weapon", str(names[weapon_index]))
+	_refresh_armory()
+
+func _refresh_armory() -> void:
+	if account_manager == null:
+		return
+	var summary: Dictionary = account_manager.call("get_account_summary")
+	account_info_label.text = "ID  " + str(summary["player_id"]) + "    CREDITS  " + str(summary["credits"]) + "\n" + str(summary["skins_unlocked"]) + " SKINS UNLOCKED   •   " + str(summary["weapons_unlocked"]) + " WEAPONS UNLOCKED"
+	var skins: Array = account_manager.get("owned_skins")
+	var weapons: Array = account_manager.get("owned_weapons")
+	if skins.size() > 0:
+		var selected_skin := str(account_manager.get("equipped_skin"))
+		skin_index = maxi(0, skins.find(selected_skin))
+		skin_name_label.text = "★  " + selected_skin
+	if weapons.size() > 0:
+		var selected_weapon := str(account_manager.get("equipped_weapon"))
+		weapon_index = maxi(0, weapons.find(selected_weapon))
+		weapon_name_label.text = "◆  " + selected_weapon
 
 func _process(_delta: float) -> void:
 	if player != null:
