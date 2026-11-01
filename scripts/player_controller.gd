@@ -32,6 +32,8 @@ var fox_spirit: Node3D
 var black_fox_skin: Node3D
 var black_fox_coat_left: Node3D
 var black_fox_coat_right: Node3D
+var black_fox_aura: MeshInstance3D
+var black_fox_aura_material: StandardMaterial3D
 const FIRE_INTERVAL := 0.22
 const HIT_DAMAGE := 25
 var camera_pivot: Node3D
@@ -370,6 +372,12 @@ func _apply_black_fox_variant(skin_name: String) -> void:
 	glow_mat.emission_enabled = true
 	glow_mat.emission = glow
 	glow_mat.emission_energy_multiplier = 2.4
+	if fox_spirit != null:
+		for spirit_node in fox_spirit.find_children("*", "MeshInstance3D", true, false):
+			(spirit_node as MeshInstance3D).material_override = glow_mat
+	if black_fox_aura_material != null:
+		black_fox_aura_material.albedo_color = Color(glow.r, glow.g, glow.b, 0.42)
+		black_fox_aura_material.emission = glow
 	for node in black_fox_skin.find_children("*", "MeshInstance3D", true, false):
 		var part := node as MeshInstance3D
 		if part.name.contains("Eye") or part.name.contains("Line") or part.name.contains("Edge") or part.name.contains("Crest") or part.name.contains("Piping") or part.name.contains("Emblem") or part.name.contains("Trim") or part.name.contains("Seam"):
@@ -380,6 +388,23 @@ func _build_black_fox_skin() -> void:
 	black_fox_skin.name = "BLACK_FOX_EXCLUSIVE_DETAILS"
 	black_fox_skin.visible = true
 	visual_root.add_child(black_fox_skin)
+	black_fox_aura = MeshInstance3D.new()
+	black_fox_aura.name = "BLACK_FOX_GROUND_AURA"
+	var aura_mesh := TorusMesh.new()
+	aura_mesh.inner_radius = 0.43
+	aura_mesh.outer_radius = 0.49
+	black_fox_aura.mesh = aura_mesh
+	black_fox_aura.position = Vector3(0, 0.035, 0)
+	black_fox_aura.rotation.x = PI * 0.5
+	black_fox_aura_material = StandardMaterial3D.new()
+	black_fox_aura_material.albedo_color = Color(1.0, 0.015, 0.025, 0.42)
+	black_fox_aura_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	black_fox_aura_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	black_fox_aura_material.emission_enabled = true
+	black_fox_aura_material.emission = Color(1.0, 0.015, 0.025)
+	black_fox_aura_material.emission_energy_multiplier = 1.8
+	black_fox_aura.material_override = black_fox_aura_material
+	black_fox_skin.add_child(black_fox_aura)
 	var black := _material(Color(0.012, 0.014, 0.022), 0.42, 0.34)
 	var cloth := _material(Color(0.035, 0.022, 0.032), 0.12, 0.82)
 	var red := StandardMaterial3D.new()
@@ -633,6 +658,11 @@ func _update_character_animation(delta: float) -> void:
 		muzzle_flash.visible = muzzle_flash_time > 0.0
 	if muzzle_light != null:
 		muzzle_light.light_energy = 2.8 if muzzle_flash_time > 0.0 else 0.0
+	if black_fox_aura != null and black_fox_skin != null and black_fox_skin.visible:
+		black_fox_aura.rotation.y += delta * 0.75
+		var aura_pulse := 1.0 + sin(animation_clock * 3.2) * 0.045
+		black_fox_aura.scale = Vector3(aura_pulse, 1.0, aura_pulse)
+		black_fox_aura.visible = is_on_floor()
 	if black_fox_coat_left != null and black_fox_skin != null and black_fox_skin.visible:
 		var coat_sway := sin(animation_clock * 5.0) * 0.10
 		var speed_factor := clampf(Vector2(velocity.x, velocity.z).length() / SPRINT_SPEED, 0.0, 1.0)
