@@ -177,7 +177,7 @@ func _apply_skin_palette(skin_name: String) -> void:
 		elif part.name in ["Chest_Insignia", "Helmet_Visor", "Shoulder_Patch", "Radio_Antenna", "Helmet_Rear_Ridge", "Shoulder_Trim_Left", "Shoulder_Trim_Right", "Chest_Center_Buckle", "Knee_Stripe_Left", "Knee_Stripe_Right"]:
 			part.material_override = accent_mat
 		elif part.name in ["Chest_Pouch_Left", "Chest_Pouch_Right", "Chest_Radio", "Helmet_Comms_Left", "Helmet_Comms_Right", "Helmet_Front_Brim", "Chest_Lower_Armor", "Waist_Utility_Belt", "Elbow_Guard_Left", "Elbow_Guard_Right"]:
-			part.material_override = dark
+			part.material_override = dark_mat
 		elif part.name in ["Belt_Pouch_Left", "Belt_Pouch_Right", "Neck_Gaiter", "Backpack_Side_Left", "Backpack_Side_Right", "Chest_Straps_Left", "Chest_Straps_Right", "Thigh_Plate_Left", "Thigh_Plate_Right"]:
 			part.material_override = fabric_mat
 
@@ -602,7 +602,8 @@ func _update_character_animation(delta: float) -> void:
 		muzzle_light.light_energy = 2.8 if muzzle_flash_time > 0.0 else 0.0
 	if fox_spirit != null:
 		var fox_cycle := fposmod(animation_clock, 10.0)
-		fox_spirit.visible = fox_cycle > 5.8 and fox_cycle < 8.5
+		var fox_skin_equipped := black_fox_skin != null and black_fox_skin.visible
+		fox_spirit.visible = fox_skin_equipped and fox_cycle > 5.8 and fox_cycle < 8.5
 		var fox_fade := minf((fox_cycle - 5.8) / 0.35, (8.5 - fox_cycle) / 0.35)
 		fox_spirit.scale = Vector3.ONE * (0.78 + 0.22 * sin(animation_clock * 8.0)) * clampf(fox_fade, 0.0, 1.0)
 		fox_spirit.position.y = 1.66 + sin(animation_clock * 3.4) * 0.055
