@@ -1,17 +1,31 @@
-# WARFOX
+# HICHAM WARFOX
 
-An original Android-first Battle Royale project made with Godot 4.
+An original, free, Android-first third-person Battle Royale project built with Godot 4. The project uses original procedural geometry and built-in materials so the prototype does not depend on paid assets.
 
-## Current milestone: island map prototype
-The repository contains the initial Godot project, main scene, and a procedural island map generated from built-in geometry. It is an early visual foundation, not a complete game.
+## Current milestone: playable movement and collision foundation
+
+The current prototype includes:
+- Procedural island terrain with a generated trimesh collision surface.
+- Five named island locations.
+- Enterable landmark buildings with separate floor, roof, and wall collision bodies.
+- A third-person tactical soldier model built from original primitive geometry.
+- A CharacterBody3D capsule collider for the player, with walking, sprinting, jumping, and crouching.
+- A SpringArm camera to help prevent the camera from passing through nearby geometry.
+- Mobile joystick and touch buttons for movement, sprint, jump, and crouch.
+
+## Important status
+
+This is an early playable foundation, not a finished Battle Royale game. The character is a temporary procedural model; production-quality animated character assets, weapon handling, bots, inventory, match flow, optimization, and multiplayer still need implementation and device testing.
 
 ## Open the project
-1. Install Godot 4 from https://godotengine.org/download/.
-2. Download this repository as a ZIP, or clone it.
+
+1. Install Godot 4.
+2. Clone or download this repository.
 3. Import the folder containing `project.godot` into Godot.
 4. Run the main scene.
 
-## First map regions
+## First island locations
+
 - Central Command City
 - Air Defense Base
 - Airport Hangar
@@ -19,12 +33,14 @@ The repository contains the initial Godot project, main scene, and a procedural 
 - Coastal Village
 
 ## Development roadmap
-1. Validate and improve the island map.
-2. Create a third-person player controller and camera.
-3. Add mobile touch controls.
-4. Build a small playable test area and weapon sandbox.
-5. Add bots and match flow.
-6. Develop online services and multiplayer infrastructure.
-7. Build the separate WARFOX ADMIN application.
 
-The prototype uses original procedural geometry and does not require paid assets. Online matches for 50 players will require reliable server infrastructure and substantial testing.
+1. Test player movement, terrain collision, and building collision on Android.
+2. Fix any clipping, collision, camera, or touch-control bugs found during testing.
+3. Add weapon sandbox, aiming, firing, hit detection, and reload.
+4. Add animated player and bot characters with navigation and combat AI.
+5. Add loot, inventory, health, match flow, and shrinking safe zone.
+6. Add lobby, cosmetics, rewards, and store interfaces.
+7. Develop online services and multiplayer infrastructure after offline gameplay is stable.
+8. Develop the separate WARFOX ADMIN application.
+
+A reliable 50-player online mode requires dedicated server infrastructure and extensive network and security testing.
