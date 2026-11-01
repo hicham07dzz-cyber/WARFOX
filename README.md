@@ -11,6 +11,8 @@ The current prototype includes:
 - A third-person tactical soldier model built from original primitive geometry.
 - A CharacterBody3D capsule collider for the player, with walking, sprinting, jumping, and crouching.
 - A SpringArm camera to help prevent the camera from passing through nearby geometry.
+- An arcade raycast firing system with a centered reticle and mobile fire button.
+- Three training targets with health values, hit feedback, and automatic respawn.
 - Mobile joystick and touch buttons for movement, sprint, jump, and crouch.
 
 ## Important status
@@ -36,7 +38,7 @@ This is an early playable foundation, not a finished Battle Royale game. The cha
 
 1. Test player movement, terrain collision, and building collision on Android.
 2. Fix any clipping, collision, camera, or touch-control bugs found during testing.
-3. Add weapon sandbox, aiming, firing, hit detection, and reload.
+3. Expand the weapon sandbox with weapon selection, reload, and polished hit feedback.
 4. Add animated player and bot characters with navigation and combat AI.
 5. Add loot, inventory, health, match flow, and shrinking safe zone.
 6. Add lobby, cosmetics, rewards, and store interfaces.
