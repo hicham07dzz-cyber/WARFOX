@@ -68,6 +68,13 @@ func _build_hud() -> void:
 	title.add_theme_font_size_override("font_size", 23)
 	root.add_child(title)
 
+	var account_id_label := Label.new()
+	account_id_label.text = "PLAYER ID  1000000001  •  WARFOX ELITE"
+	account_id_label.position = Vector2(24, 43)
+	account_id_label.add_theme_color_override("font_color", Color(0.88, 0.92, 0.94))
+	account_id_label.add_theme_font_size_override("font_size", 13)
+	root.add_child(account_id_label)
+
 	health_text = Label.new()
 	health_text.text = "HP 200 / 200"
 	health_text.anchor_left = 1.0
