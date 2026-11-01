@@ -175,10 +175,22 @@ func receive_hit(damage: int) -> void:
 	if health == 0:
 		_defeat()
 
-func _defeat() -> void:
-	var players := get_tree().get_nodes_in_group("warfox_player")
-	if not players.is_empty() and players[0].has_method("register_kill"):
-		players[0].register_kill()
+func receive_zone_damage(damage: int) -> void:
+	if health <= 0 or damage <= 0:
+		return
+	health = maxi(0, health - damage)
+	var label := get_node_or_null("BotHealthLabel") as Label3D
+	if label != null:
+		label.text = "BOT " + str(health)
+	if health == 0:
+		_defeat(false)
+
+
+func _defeat(count_player_kill: bool = true) -> void:
+	if count_player_kill:
+		var players := get_tree().get_nodes_in_group("warfox_player")
+		if not players.is_empty() and players[0].has_method("register_kill"):
+			players[0].register_kill()
 	_drop_loot()
 	queue_free()
 
