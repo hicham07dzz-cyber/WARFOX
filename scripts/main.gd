@@ -191,11 +191,37 @@ func _add_building(label: String, x: float, z: float, size: Vector3, color: Colo
 	_add_box_body(building, "Roof", Vector3(width + 1.0, 1.0, depth + 1.0), Vector3(0, height + 0.5, 0), color.darkened(0.3))
 
 func _build_landmarks() -> void:
-	_add_building("Central_Command_City", 0, 0, Vector3(100, 34, 90), Color(0.24, 0.29, 0.32))
-	_add_building("Air_Defense_Base", -235, -80, Vector3(90, 20, 75), Color(0.27, 0.30, 0.29))
-	_add_building("Airport_Hangar", 245, 115, Vector3(110, 16, 55), Color(0.36, 0.37, 0.35))
-	_add_building("Industrial_Zone", 60, 300, Vector3(105, 23, 80), Color(0.34, 0.29, 0.23))
-	_add_building("Coastal_Village", -330, 210, Vector3(65, 12, 60), Color(0.49, 0.40, 0.28))
+	# Ten named regions from design/ISLAND_MAP.md. Coordinates are kept
+	# inside the island and spread to create distinct combat routes.
+	_add_building("01_Central_Command_City", 0, 0, Vector3(100, 34, 90), Color(0.24, 0.29, 0.32))
+	_add_building("01_Central_Command_Tower", 58, -28, Vector3(24, 52, 24), Color(0.19, 0.24, 0.29))
+
+	_add_building("02_Air_Defense_Base", -235, -80, Vector3(90, 20, 75), Color(0.27, 0.30, 0.29))
+	_add_building("02_Radar_Control_Building", -280, -112, Vector3(28, 13, 24), Color(0.20, 0.25, 0.25))
+
+	_add_building("03_WARFOX_International_Airfield", 245, 115, Vector3(110, 16, 55), Color(0.36, 0.37, 0.35))
+	_add_building("03_Airfield_Terminal", 305, 150, Vector3(52, 12, 30), Color(0.42, 0.44, 0.43))
+
+	_add_building("04_Ironworks_Industrial_Zone", 60, 300, Vector3(105, 23, 80), Color(0.34, 0.29, 0.23))
+	_add_building("04_Ironworks_Warehouse", 112, 345, Vector3(42, 17, 32), Color(0.28, 0.30, 0.30))
+
+	_add_building("05_Coastal_Village", -330, 210, Vector3(65, 12, 60), Color(0.49, 0.40, 0.28))
+	_add_building("05_Coastal_Market_Hall", -285, 245, Vector3(28, 9, 22), Color(0.52, 0.42, 0.29))
+
+	_add_building("06_Pinecrest_Forest_Cabin_East", 350, -180, Vector3(24, 9, 20), Color(0.32, 0.25, 0.17))
+	_add_building("06_Pinecrest_Forest_Cabin_West", 325, -215, Vector3(20, 8, 18), Color(0.36, 0.28, 0.18))
+
+	_add_building("07_Redstone_Highlands_Lookout", -410, -230, Vector3(30, 11, 26), Color(0.40, 0.34, 0.27))
+	_add_building("07_Redstone_Ridge_Shelter", -375, -265, Vector3(18, 7, 16), Color(0.35, 0.30, 0.25))
+
+	_add_building("08_Sunset_Resort_Hotel", -150, 350, Vector3(58, 20, 38), Color(0.47, 0.36, 0.28))
+	_add_building("08_Sunset_Resort_Beach_Club", -120, 375, Vector3(30, 8, 20), Color(0.56, 0.43, 0.31))
+
+	_add_building("09_Old_Quarry_Processing_House", 410, 220, Vector3(34, 13, 28), Color(0.36, 0.34, 0.29))
+	_add_building("09_Old_Quarry_Machinery_Shed", 390, 250, Vector3(22, 8, 18), Color(0.30, 0.31, 0.29))
+
+	_add_building("10_Signal_Station_Main", 150, -390, Vector3(36, 16, 30), Color(0.25, 0.31, 0.34))
+	_add_building("10_Signal_Station_Generator", 190, -360, Vector3(18, 8, 16), Color(0.22, 0.26, 0.28))
 
 func _spawn_player(_terrain: MeshInstance3D) -> void:
 	var player_script = load("res://scripts/player_controller.gd")
