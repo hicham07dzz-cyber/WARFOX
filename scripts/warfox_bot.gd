@@ -9,7 +9,6 @@ const MAX_DAMAGE := 10
 const ATTACK_RANGE := 1.65
 const SHOT_RANGE := 22.0
 const ATTACK_COOLDOWN := 1.35
-const RESPAWN_DELAY := 3.0
 
 var health := MAX_HEALTH
 var player: Node3D
@@ -180,20 +179,21 @@ func _defeat() -> void:
 	var players := get_tree().get_nodes_in_group("warfox_player")
 	if not players.is_empty() and players[0].has_method("register_kill"):
 		players[0].register_kill()
-	set_physics_process(false)
-	visible = false
-	collision_layer = 0
-	collision_mask = 0
-	await get_tree().create_timer(RESPAWN_DELAY).timeout
-	if not is_inside_tree():
+	_drop_loot()
+	queue_free()
+
+
+func _drop_loot() -> void:
+	var loot_script = load("res://scripts/loot_pickup.gd")
+	if loot_script == null:
 		return
-	health = MAX_HEALTH
-	global_position = spawn_position
-	velocity = Vector3.ZERO
-	visible = true
-	collision_layer = 1
-	collision_mask = 1
-	var label := get_node_or_null("BotHealthLabel") as Label3D
-	if label != null:
-		label.text = "BOT 100"
-	set_physics_process(true)
+	var pickup := Area3D.new()
+	pickup.set_script(loot_script)
+	if randf() < 0.72:
+		pickup.pickup_type = "ammo"
+		pickup.amount = 45
+	else:
+		pickup.pickup_type = "medkit"
+		pickup.amount = 1
+	pickup.position = Vector3(global_position.x, global_position.y + 0.8, global_position.z)
+	get_parent().add_child(pickup)
