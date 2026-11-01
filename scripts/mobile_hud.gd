@@ -7,6 +7,8 @@ var sprint_active := false
 var crouch_active := false
 var jump_pulse := false
 var fire_pulse := false
+var health_bar: ProgressBar
+var health_text: Label
 
 func _ready() -> void:
 	_build_hud()
@@ -56,6 +58,38 @@ func _build_hud() -> void:
 	title.add_theme_color_override("font_color", Color(1.0, 0.42, 0.08))
 	title.add_theme_font_size_override("font_size", 23)
 	root.add_child(title)
+
+	health_text = Label.new()
+	health_text.text = "HP 100 / 100"
+	health_text.anchor_left = 1.0
+	health_text.anchor_right = 1.0
+	health_text.position = Vector2(-220, 22)
+	health_text.size = Vector2(190, 24)
+	health_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	health_text.add_theme_color_override("font_color", Color(0.9, 0.96, 0.92))
+	health_text.add_theme_font_size_override("font_size", 16)
+	root.add_child(health_text)
+
+	health_bar = ProgressBar.new()
+	health_bar.anchor_left = 1.0
+	health_bar.anchor_right = 1.0
+	health_bar.position = Vector2(-220, 50)
+	health_bar.size = Vector2(190, 15)
+	health_bar.min_value = 0
+	health_bar.max_value = 100
+	health_bar.value = 100
+	health_bar.show_percentage = false
+	var bar_fill := StyleBoxFlat.new()
+	bar_fill.bg_color = Color(0.18, 0.78, 0.39)
+	bar_fill.corner_radius_top_left = 5
+	bar_fill.corner_radius_top_right = 5
+	bar_fill.corner_radius_bottom_left = 5
+	bar_fill.corner_radius_bottom_right = 5
+	health_bar.add_theme_stylebox_override("fill", bar_fill)
+	var bar_bg := StyleBoxFlat.new()
+	bar_bg.bg_color = Color(0.04, 0.06, 0.07, 0.8)
+	health_bar.add_theme_stylebox_override("background", bar_bg)
+	root.add_child(health_bar)
 
 	var mode := Label.new()
 	mode.text = "ISLAND TEST  •  THIRD PERSON"
@@ -134,6 +168,9 @@ func _build_hud() -> void:
 func _process(_delta: float) -> void:
 	if player != null:
 		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse)
+		if health_bar != null:
+			health_bar.value = player.health
+			health_text.text = "HP " + str(player.health) + " / 100"
 	jump_pulse = false
 	fire_pulse = false
 
