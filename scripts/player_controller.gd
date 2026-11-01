@@ -262,7 +262,7 @@ func _build_fox_spirit() -> void:
 	fox_spirit.add_child(head)
 	for side in [-1.0, 1.0]:
 		var ear := MeshInstance3D.new()
-		var ear_mesh := ConeMesh.new()
+		var ear_mesh := CylinderMesh.new()
 		ear_mesh.bottom_radius = 0.055
 		ear_mesh.top_radius = 0.0
 		ear_mesh.height = 0.17
