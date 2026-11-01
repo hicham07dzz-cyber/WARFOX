@@ -122,8 +122,9 @@ func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool
 	jump_requested = jump_requested or jump
 
 func _set_crouch_state() -> void:
+	var wants_crouch := crouching or Input.is_action_pressed("crouch")
 	var capsule := collision_capsule.shape as CapsuleShape3D
-	var target_height := crouched_height if crouching else standing_height
+	var target_height := crouched_height if wants_crouch else standing_height
 	if absf(capsule.height - target_height) > 0.01:
 		capsule.height = move_toward(capsule.height, target_height, 0.12)
 		collision_capsule.position.y = capsule.height * 0.5
@@ -138,7 +139,8 @@ func _physics_process(delta: float) -> void:
 	var right := global_transform.basis.x
 	var direction := (right * input_dir.x + forward * -input_dir.y).normalized()
 
-	var speed := CROUCH_SPEED if crouching else (SPRINT_SPEED if sprinting or Input.is_action_pressed("sprint") else WALK_SPEED)
+	var is_crouched := crouching or Input.is_action_pressed("crouch")
+	var speed := CROUCH_SPEED if is_crouched else (SPRINT_SPEED if sprinting or Input.is_action_pressed("sprint") else WALK_SPEED)
 	var target_x := direction.x * speed
 	var target_z := direction.z * speed
 	var rate := ACCELERATION if direction.length() > 0.01 else DECELERATION
@@ -151,7 +153,7 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
-	elif (jump_requested or Input.is_action_just_pressed("jump")) and not crouching:
+	elif (jump_requested or Input.is_action_just_pressed("jump")) and not (crouching or Input.is_action_pressed("crouch")):
 		velocity.y = JUMP_VELOCITY
 
 	jump_requested = false
