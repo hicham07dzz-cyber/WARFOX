@@ -51,8 +51,9 @@ var medkit_visual: MeshInstance3D
 var medkit_cross: MeshInstance3D
 var standing_height := 1.85
 var crouched_height := 1.15
-const MAX_HEALTH := 100
+const MAX_HEALTH := 200
 var health := MAX_HEALTH
+var kills := 0
 var spawn_position := Vector3.ZERO
 var is_knocked_out := false
 const LOOK_SENSITIVITY := 0.0035
@@ -557,3 +558,7 @@ func apply_pickup(pickup_type: String, amount: int) -> bool:
 		medkits = mini(5, medkits + amount)
 		return medkits > before
 	return false
+
+
+func register_kill() -> void:
+    kills += 1

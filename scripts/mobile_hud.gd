@@ -17,6 +17,7 @@ var health_bar: ProgressBar
 var health_text: Label
 var medkit_button: Button
 var zone_status_label: Label
+var match_stats_label: Label
 
 func _ready() -> void:
 	_build_hud()
@@ -68,7 +69,7 @@ func _build_hud() -> void:
 	root.add_child(title)
 
 	health_text = Label.new()
-	health_text.text = "HP 100 / 100"
+	health_text.text = "HP 200 / 200"
 	health_text.anchor_left = 1.0
 	health_text.anchor_right = 1.0
 	health_text.position = Vector2(-220, 22)
@@ -84,8 +85,8 @@ func _build_hud() -> void:
 	health_bar.position = Vector2(-220, 50)
 	health_bar.size = Vector2(190, 15)
 	health_bar.min_value = 0
-	health_bar.max_value = 100
-	health_bar.value = 100
+	health_bar.max_value = 200
+	health_bar.value = 200
 	health_bar.show_percentage = false
 	var bar_fill := StyleBoxFlat.new()
 	bar_fill.bg_color = Color(0.18, 0.78, 0.39)
@@ -144,6 +145,15 @@ func _build_hud() -> void:
 	zone_status_label.add_theme_color_override("font_color", Color(0.35, 0.82, 1.0))
 	zone_status_label.add_theme_font_size_override("font_size", 14)
 	root.add_child(zone_status_label)
+
+    match_stats_label = Label.new()
+    match_stats_label.text = "KILLS 0  |  BOTS 0"
+    match_stats_label.position = Vector2(25, 96)
+    match_stats_label.size = Vector2(250, 24)
+    match_stats_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.28))
+    match_stats_label.add_theme_font_size_override("font_size", 15)
+    root.add_child(match_stats_label)
+
 
 	var mode := Label.new()
 	mode.text = "ISLAND TEST  •  THIRD PERSON"
@@ -258,18 +268,27 @@ func _build_hud() -> void:
 func _process(_delta: float) -> void:
 	if player != null:
 		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse, heal_pulse, parachute_pulse, reload_pulse)
+
+        if match_stats_label != null:
+            world := player.get_parent()
+            var active_bots := 0
+            if world != null:
+                for bot in world.get_nodes_in_group("warfox_bots"):
+                    if bot.visible and bot.health > 0:
+                        active_bots += 1
+            match_stats_label.text = "KILLS " + str(player.kills) + "  |  BOTS " + str(active_bots)
 		if flight_hint != null:
 			flight_hint.visible = player.parachute_deployed
 		if health_bar != null:
 			health_bar.value = player.health
-			health_text.text = "HP " + str(player.health) + " / 100"
+			health_text.text = "HP " + str(player.health) + " / " + str(player.MAX_HEALTH)
 		if ammo_text != null:
 			ammo_text.text = "AMMO " + str(player.ammo) + " / " + str(player.reserve_ammo) + ("  •  RELOADING" if player.is_reloading else "")
 		if reload_button != null:
 			reload_button.disabled = player.is_reloading or player.ammo >= player.MAGAZINE_SIZE or player.reserve_ammo <= 0
 		if medkit_button != null:
 			medkit_button.text = "MEDKIT x" + str(player.medkits)
-			medkit_button.disabled = player.medkits <= 0 or player.health >= 100 or player.healing
+			medkit_button.disabled = player.medkits <= 0 or player.health >= player.MAX_HEALTH or player.healing
 		if zone_status_label != null:
 			var world := player.get_parent()
 			if world != null:

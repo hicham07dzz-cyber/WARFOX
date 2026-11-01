@@ -4,10 +4,10 @@ class_name WarfoxBot
 const MOVE_SPEED := 2.8
 const GRAVITY := 22.0
 const MAX_HEALTH := 100
-const HIT_DAMAGE := 8
+const MIN_DAMAGE := 5
+const MAX_DAMAGE := 10
 const ATTACK_RANGE := 1.65
 const SHOT_RANGE := 22.0
-const SHOT_DAMAGE := 7
 const ATTACK_COOLDOWN := 1.35
 const RESPAWN_DELAY := 3.0
 
@@ -129,7 +129,7 @@ func _physics_process(delta: float) -> void:
 			rotation.y = atan2(-flat.normalized().x, -flat.normalized().z)
 		if attack_timer <= 0.0 and _can_see_player():
 			if player.has_method("receive_damage"):
-				player.receive_damage(SHOT_DAMAGE)
+				player.receive_damage(randi_range(MIN_DAMAGE, MAX_DAMAGE))
 			_show_shot_tracer()
 			attack_timer = ATTACK_COOLDOWN
 	elif distance <= ATTACK_RANGE:
@@ -137,7 +137,7 @@ func _physics_process(delta: float) -> void:
 		velocity.z = 0.0
 		if attack_timer <= 0.0 and _can_see_player():
 			if player.has_method("receive_damage"):
-				player.receive_damage(HIT_DAMAGE)
+				player.receive_damage(randi_range(MIN_DAMAGE, MAX_DAMAGE))
 			attack_timer = ATTACK_COOLDOWN
 	elif distance < 38.0:
 		var direction := flat.normalized()
