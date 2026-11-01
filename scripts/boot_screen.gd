@@ -8,9 +8,10 @@ var settings_panel: PanelContainer
 var profile_panel: PanelContainer
 var skin_panel: PanelContainer
 var skin_name_label: Label
+var skin_preview: TextureRect
 var account_manager: Node
 var selected_skin_index := 0
-const SKIN_NAMES := ["FOX COMMANDER", "SHADOW RECON", "DESERT PHANTOM", "ARCTIC WOLF", "EMBER GUARD", "NEON HUNTER"]
+const SKIN_NAMES := ["BLACK FOX RED", "BLACK FOX BLUE", "BLACK FOX GOLD", "BLACK FOX PURPLE", "FOX COMMANDER", "SHADOW RECON", "DESERT PHANTOM", "ARCTIC WOLF", "EMBER GUARD", "NEON HUNTER"]
 var progress_bar: ProgressBar
 var progress_label: Label
 var status_label: Label
@@ -404,6 +405,14 @@ func _save_audio_settings(value: float) -> void:
 func _build_skins_panel() -> void:
 	skin_panel = _make_secondary_panel("WARFOX  //  OPERATOR SKINS")
 	var content := skin_panel.get_child(0) as VBoxContainer
+	skin_preview = TextureRect.new()
+	skin_preview.name = "BlackFoxPreview"
+	skin_preview.custom_minimum_size = Vector2(0, 142)
+	skin_preview.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	skin_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	if ResourceLoader.exists("res://assets/black_fox_preview.jpg"):
+		skin_preview.texture = load("res://assets/black_fox_preview.jpg")
+	content.add_child(skin_preview)
 	skin_name_label = Label.new()
 	skin_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	skin_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
