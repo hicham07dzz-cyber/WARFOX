@@ -505,6 +505,12 @@ func _update_character_animation(delta: float) -> void:
 		fox_spirit.visible = fox_cycle > 5.8 and fox_cycle < 8.5
 		var fox_fade := minf((fox_cycle - 5.8) / 0.35, (8.5 - fox_cycle) / 0.35)
 		fox_spirit.scale = Vector3.ONE * (0.78 + 0.22 * sin(animation_clock * 8.0)) * clampf(fox_fade, 0.0, 1.0)
+		fox_spirit.position.y = 1.66 + sin(animation_clock * 3.4) * 0.055
+		fox_spirit.rotation.y = sin(animation_clock * 1.8) * 0.18
+		var spirit_tail := fox_spirit.get_node_or_null("Spirit_Tail") as MeshInstance3D
+		if spirit_tail != null:
+			spirit_tail.rotation.x = -0.9 + sin(animation_clock * 7.0) * 0.16
+			spirit_tail.rotation.z = 0.55 + cos(animation_clock * 5.0) * 0.12
 	damage_animation_time = maxf(0.0, damage_animation_time - delta)
 	if is_knocked_out:
 		visual_root.rotation.x = lerp(visual_root.rotation.x, -1.0, delta * 5.0)
@@ -524,11 +530,16 @@ func _update_character_animation(delta: float) -> void:
 	var run_blend := clampf(horizontal_speed / SPRINT_SPEED, 0.0, 1.0) if moving else 0.0
 	var stride := sin(animation_clock * (8.0 + horizontal_speed * 1.25)) * run_blend
 	var idle_bob := sin(animation_clock * 2.2) * 0.018
+	var breathing := sin(animation_clock * 1.65) * 0.012
+	var sprint_blend := clampf((horizontal_speed - WALK_SPEED) / (SPRINT_SPEED - WALK_SPEED), 0.0, 1.0) if moving else 0.0
 	visual_root.position.y = idle_bob + (0.025 if moving else 0.0)
-	left_leg_pivot.rotation.x = stride * 0.62 - crouch_blend * 0.38
-	right_leg_pivot.rotation.x = -stride * 0.62 - crouch_blend * 0.38
-	left_arm_pivot.rotation.x = -stride * 0.48 + crouch_blend * 0.48
-	right_arm_pivot.rotation.x = stride * 0.48 + crouch_blend * 0.48
+	# Subtle torso motion gives the procedural operator a more natural idle and run cycle.
+	visual_root.rotation.x = lerp(visual_root.rotation.x, -0.10 * sprint_blend + 0.12 * crouch_blend, delta * 7.0)
+	visual_root.rotation.y = sin(animation_clock * 1.1) * 0.012 * (1.0 - run_blend)
+	left_leg_pivot.rotation.x = stride * (0.62 + sprint_blend * 0.12) - crouch_blend * 0.38
+	right_leg_pivot.rotation.x = -stride * (0.62 + sprint_blend * 0.12) - crouch_blend * 0.38
+	left_arm_pivot.rotation.x = -stride * 0.48 + crouch_blend * 0.48 + breathing
+	right_arm_pivot.rotation.x = stride * 0.48 + crouch_blend * 0.48 - breathing
 	if not is_on_floor() and not parachute_deployed:
 		left_arm_pivot.rotation.x = -0.75
 		right_arm_pivot.rotation.x = -0.75
