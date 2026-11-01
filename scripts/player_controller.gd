@@ -70,6 +70,9 @@ func _ready() -> void:
 	_build_camera()
 	spawn_position = global_position
 	add_to_group("warfox_player")
+	var account := get_parent().get_node_or_null("WARFOX_Account")
+	if account != null:
+		apply_equipped_loadout(account)
 
 func _build_collision() -> void:
 	collision_capsule = CollisionShape3D.new()
@@ -110,6 +113,97 @@ func _add_capsule(parent: Node3D, label: String, radius: float, height: float, p
 	part.material_override = mat
 	parent.add_child(part)
 	return part
+
+func apply_equipped_loadout(account: Node) -> void:
+	var skin_name := str(account.get("equipped_skin"))
+	var weapon_name := str(account.get("equipped_weapon"))
+	_apply_skin_palette(skin_name)
+	_apply_weapon_palette(weapon_name)
+
+func _apply_skin_palette(skin_name: String) -> void:
+	var armor_color := Color(0.12, 0.19, 0.20)
+	var fabric_color := Color(0.25, 0.29, 0.24)
+	var accent_color := Color(0.95, 0.29, 0.055)
+	var helmet_color := Color(0.055, 0.075, 0.085)
+	match skin_name:
+		"SHADOW RECON":
+			armor_color = Color(0.055, 0.065, 0.085)
+			fabric_color = Color(0.12, 0.14, 0.18)
+			accent_color = Color(0.20, 0.62, 0.92)
+			helmet_color = Color(0.025, 0.035, 0.055)
+		"DESERT PHANTOM":
+			armor_color = Color(0.43, 0.32, 0.19)
+			fabric_color = Color(0.57, 0.45, 0.28)
+			accent_color = Color(0.95, 0.68, 0.22)
+			helmet_color = Color(0.24, 0.18, 0.12)
+		"ARCTIC WOLF":
+			armor_color = Color(0.48, 0.60, 0.68)
+			fabric_color = Color(0.70, 0.77, 0.80)
+			accent_color = Color(0.22, 0.82, 1.0)
+			helmet_color = Color(0.15, 0.23, 0.29)
+		"EMBER GUARD":
+			armor_color = Color(0.25, 0.07, 0.055)
+			fabric_color = Color(0.19, 0.12, 0.11)
+			accent_color = Color(1.0, 0.30, 0.045)
+			helmet_color = Color(0.075, 0.035, 0.03)
+		"NEON HUNTER":
+			armor_color = Color(0.08, 0.12, 0.18)
+			fabric_color = Color(0.11, 0.16, 0.22)
+			accent_color = Color(0.12, 1.0, 0.72)
+			helmet_color = Color(0.025, 0.06, 0.09)
+	var armor_mat := _material(armor_color, 0.32, 0.48)
+	var fabric_mat := _material(fabric_color, 0.05, 0.78)
+	var accent_mat := _material(accent_color, 0.24, 0.4)
+	var helmet_mat := _material(helmet_color, 0.28, 0.42)
+	for node in visual_root.find_children("*", "MeshInstance3D", true, false):
+		var part := node as MeshInstance3D
+		if part.name in ["Torso_Armor", "Chest_Plate"]:
+			part.material_override = armor_mat if part.name == "Torso_Armor" else helmet_mat
+		elif part.name in ["UpperArm", "Thigh"]:
+			part.material_override = fabric_mat
+		elif part.name in ["Forearm_Guard", "Boot_Leg", "Boot", "Belt", "Backpack", "Helmet"]:
+			part.material_override = helmet_mat
+		elif part.name in ["Chest_Insignia", "Helmet_Visor", "Shoulder_Patch"]:
+			part.material_override = accent_mat
+
+func _apply_weapon_palette(weapon_name: String) -> void:
+	var base_color := Color(0.035, 0.045, 0.052)
+	var metal_color := Color(0.16, 0.19, 0.20)
+	var accent_color := Color(0.92, 0.12, 0.045)
+	match weapon_name:
+		"STRIKER SMG":
+			base_color = Color(0.07, 0.10, 0.12)
+			metal_color = Color(0.25, 0.34, 0.38)
+			accent_color = Color(0.10, 0.82, 0.95)
+		"FALCON DMR":
+			base_color = Color(0.18, 0.16, 0.12)
+			metal_color = Color(0.48, 0.40, 0.26)
+			accent_color = Color(0.95, 0.72, 0.20)
+		"BREACH SHOTGUN":
+			base_color = Color(0.12, 0.065, 0.045)
+			metal_color = Color(0.34, 0.22, 0.14)
+			accent_color = Color(1.0, 0.36, 0.08)
+		"VANGUARD SNIPER":
+			base_color = Color(0.055, 0.10, 0.075)
+			metal_color = Color(0.25, 0.38, 0.29)
+			accent_color = Color(0.58, 1.0, 0.38)
+		"TACTICAL PISTOL":
+			base_color = Color(0.045, 0.05, 0.065)
+			metal_color = Color(0.28, 0.30, 0.36)
+			accent_color = Color(0.76, 0.35, 1.0)
+	var dark_mat := _material(base_color, 0.52, 0.34)
+	var metal_mat := _material(metal_color, 0.72, 0.28)
+	var accent_mat := _material(accent_color, 0.28, 0.36)
+	if weapon_root == null:
+		return
+	for node in weapon_root.find_children("*", "MeshInstance3D", true, false):
+		var part := node as MeshInstance3D
+		if part.name in ["Rifle_Receiver", "Rifle_Barrel"]:
+			part.material_override = metal_mat
+		elif part.name in ["Rifle_Handguard", "Rifle_Stock", "Rifle_Grip", "Rifle_Sight", "Detachable_Magazine"]:
+			part.material_override = dark_mat
+		elif part.name in ["Rifle_Sight_Glow", "Magazine_Red_Stripe"]:
+			part.material_override = accent_mat
 
 func _build_visual() -> void:
 	visual_root = Node3D.new()
