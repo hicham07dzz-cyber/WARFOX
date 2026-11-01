@@ -29,6 +29,7 @@ var muzzle_light: OmniLight3D
 var muzzle_flash_time := 0.0
 var reload_animation_time := 0.0
 var fox_spirit: Node3D
+var black_fox_skin: Node3D
 const FIRE_INTERVAL := 0.22
 const HIT_DAMAGE := 25
 var camera_pivot: Node3D
@@ -126,6 +127,11 @@ func _apply_skin_palette(skin_name: String) -> void:
 	var accent_color := Color(0.95, 0.29, 0.055)
 	var helmet_color := Color(0.055, 0.075, 0.085)
 	match skin_name:
+		"BLACK FOX":
+			armor_color = Color(0.025, 0.018, 0.028)
+			fabric_color = Color(0.045, 0.035, 0.052)
+			accent_color = Color(1.0, 0.018, 0.035)
+			helmet_color = Color(0.012, 0.012, 0.022)
 		"SHADOW RECON":
 			armor_color = Color(0.055, 0.065, 0.085)
 			fabric_color = Color(0.12, 0.14, 0.18)
@@ -151,6 +157,10 @@ func _apply_skin_palette(skin_name: String) -> void:
 			fabric_color = Color(0.11, 0.16, 0.22)
 			accent_color = Color(0.12, 1.0, 0.72)
 			helmet_color = Color(0.025, 0.06, 0.09)
+	if black_fox_skin != null:
+		black_fox_skin.visible = skin_name == "BLACK FOX"
+	if fox_spirit != null:
+		fox_spirit.visible = skin_name == "BLACK FOX" and fox_spirit.get_meta("spirit_active", false)
 	var armor_mat := _material(armor_color, 0.32, 0.48)
 	var fabric_mat := _material(fabric_color, 0.05, 0.78)
 	var accent_mat := _material(accent_color, 0.24, 0.4)
@@ -314,6 +324,8 @@ func _build_visual() -> void:
 	_add_box(visual_root, "Knee_Stripe_Left", Vector3(0.17, 0.035, 0.025), Vector3(-0.19, 0.40, -0.211), accent)
 	_add_box(visual_root, "Knee_Stripe_Right", Vector3(0.17, 0.035, 0.025), Vector3(0.19, 0.40, -0.211), accent)
 
+	_build_black_fox_skin()
+
 	medkit_visual = _add_box(right_arm_pivot, "Medkit", Vector3(0.22, 0.18, 0.16), Vector3(0, -0.78, -0.12), _material(Color(0.82, 0.84, 0.78)))
 	medkit_visual.visible = false
 	medkit_cross = _add_box(right_arm_pivot, "Medkit_Cross", Vector3(0.045, 0.13, 0.018), Vector3(0, -0.78, -0.205), accent)
@@ -336,6 +348,55 @@ func _build_visual() -> void:
 	var canopy_mat := _material(Color(0.92, 0.27, 0.055), 0.08, 0.48)
 	canopy.material_override = canopy_mat
 	parachute_visual.add_child(canopy)
+
+
+func _build_black_fox_skin() -> void:
+	black_fox_skin = Node3D.new()
+	black_fox_skin.name = "BLACK_FOX_EXCLUSIVE_DETAILS"
+	black_fox_skin.visible = true
+	visual_root.add_child(black_fox_skin)
+	var black := _material(Color(0.012, 0.014, 0.022), 0.42, 0.34)
+	var cloth := _material(Color(0.035, 0.022, 0.032), 0.12, 0.82)
+	var red := StandardMaterial3D.new()
+	red.albedo_color = Color(1.0, 0.012, 0.025)
+	red.metallic = 0.24
+	red.roughness = 0.28
+	red.emission_enabled = true
+	red.emission = Color(0.9, 0.006, 0.015)
+	red.emission_energy_multiplier = 2.2
+	var white_red := StandardMaterial3D.new()
+	white_red.albedo_color = Color(1.0, 0.12, 0.12)
+	white_red.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	white_red.emission_enabled = true
+	white_red.emission = Color(1.0, 0.015, 0.025)
+	white_red.emission_energy_multiplier = 3.0
+
+	# Mask and sharp fox-inspired helmet silhouette.
+	_add_box(black_fox_skin, "BlackFox_Face_Mask", Vector3(0.34, 0.16, 0.075), Vector3(0, 1.76, -0.205), black)
+	_add_box(black_fox_skin, "BlackFox_Mask_Red_Line", Vector3(0.29, 0.018, 0.012), Vector3(0, 1.78, -0.248), red)
+	_add_box(black_fox_skin, "BlackFox_Eye_Left", Vector3(0.075, 0.018, 0.014), Vector3(-0.085, 1.86, -0.239), white_red)
+	_add_box(black_fox_skin, "BlackFox_Eye_Right", Vector3(0.075, 0.018, 0.014), Vector3(0.085, 1.86, -0.239), white_red)
+	_add_box(black_fox_skin, "BlackFox_Hood_Crown", Vector3(0.52, 0.12, 0.48), Vector3(0, 2.075, 0.015), black)
+	_add_box(black_fox_skin, "BlackFox_Hood_Red_Seam", Vector3(0.025, 0.19, 0.035), Vector3(0, 2.14, -0.18), red)
+
+	# Long split coat tails, inspired by the reference silhouette.
+	var left_tail := _add_box(black_fox_skin, "BlackFox_Coat_Tail_Left", Vector3(0.34, 0.88, 0.10), Vector3(-0.34, 0.55, 0.12), cloth)
+	left_tail.rotation.z = -0.18
+	var right_tail := _add_box(black_fox_skin, "BlackFox_Coat_Tail_Right", Vector3(0.34, 0.92, 0.10), Vector3(0.34, 0.53, 0.12), cloth)
+	right_tail.rotation.z = 0.20
+	_add_box(black_fox_skin, "BlackFox_Coat_Edge_Left", Vector3(0.035, 0.86, 0.025), Vector3(-0.49, 0.55, 0.055), red).rotation.z = -0.18
+	_add_box(black_fox_skin, "BlackFox_Coat_Edge_Right", Vector3(0.035, 0.90, 0.025), Vector3(0.49, 0.53, 0.055), red).rotation.z = 0.20
+	_add_box(black_fox_skin, "BlackFox_Coat_Belt", Vector3(0.72, 0.075, 0.045), Vector3(0, 0.88, -0.225), red)
+
+	# Glowing fox crest and red armor piping.
+	_add_box(black_fox_skin, "BlackFox_Chest_Crest", Vector3(0.20, 0.15, 0.025), Vector3(0, 1.43, -0.235), red)
+	_add_box(black_fox_skin, "BlackFox_Chest_Piping_Left", Vector3(0.025, 0.42, 0.025), Vector3(-0.25, 1.27, -0.23), red).rotation.z = -0.18
+	_add_box(black_fox_skin, "BlackFox_Chest_Piping_Right", Vector3(0.025, 0.42, 0.025), Vector3(0.25, 1.27, -0.23), red).rotation.z = 0.18
+	_add_box(black_fox_skin, "BlackFox_Thigh_Emblem", Vector3(0.16, 0.12, 0.025), Vector3(0.19, 0.62, -0.19), red)
+	_add_box(black_fox_skin, "BlackFox_Glove_Left_Trim", Vector3(0.20, 0.025, 0.19), Vector3(-0.40, 0.78, -0.04), red)
+	_add_box(black_fox_skin, "BlackFox_Glove_Right_Trim", Vector3(0.20, 0.025, 0.19), Vector3(0.40, 0.78, -0.04), red)
+	_add_box(black_fox_skin, "BlackFox_Boot_Left_Glow", Vector3(0.28, 0.035, 0.40), Vector3(-0.19, 0.12, -0.07), red)
+	_add_box(black_fox_skin, "BlackFox_Boot_Right_Glow", Vector3(0.28, 0.035, 0.40), Vector3(0.19, 0.12, -0.07), red)
 
 func _build_weapon() -> void:
 	weapon_root = Node3D.new()
