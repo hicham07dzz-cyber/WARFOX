@@ -20,6 +20,7 @@ The current prototype includes:
 - Player health display, damage handling, and automatic respawn after health reaches zero.
 - Procedural character animation states for idle breathing, walking, running, crouching, jumping/falling, firing recoil, damage flinch, healing, parachute descent, and knockout.
 - Three-use medkit action with a timed healing animation and a visible remaining-use counter.
+- Animated military transport aircraft flyover and automatic player insertion at match start.
 - Deployable parachute with horizontal steering, gentle wind drift, canopy animation, slowed descent, and a landing-roll animation.
 - Mobile joystick and touch buttons for movement, sprint, jump, crouch, and firing.
 - Right-side touch-drag camera aiming, with movement direction relative to the camera.
@@ -27,7 +28,7 @@ The current prototype includes:
 
 ## Important status
 
-This is an early playable foundation, not a finished Battle Royale game. The character is a temporary procedural model; production-quality animated character assets, weapon handling, bots, inventory, match flow, optimization, and multiplayer still need implementation and device testing.
+This is an early playable foundation, not a finished Battle Royale game. The current aircraft insertion is a visual prototype: the player begins in a freefall spawn and the parachute deploys automatically; a fully animated interior, jump-door interaction, and selectable drop route remain future work. The character is a temporary procedural model; production-quality animated character assets, weapon handling, bots, inventory, match flow, optimization, and multiplayer still need implementation and device testing.
 
 ## Open the project
 
