@@ -22,6 +22,7 @@ The current prototype includes:
 - Three-use medkit action with a timed healing animation and a visible remaining-use counter.
 - Animated military transport aircraft flyover and automatic player insertion at match start.
 - Eight world loot pickups: rotating ammo crates and medkit cases placed around the island, with proximity collection and inventory limits.
+- Shrinking safe zone with a visible glowing boundary and periodic damage to players outside it.
 - Deployable parachute with horizontal steering, gentle wind drift, canopy animation, slowed descent, and a landing-roll animation.
 - Mobile joystick and touch buttons for movement, sprint, jump, crouch, and firing.
 - Right-side touch-drag camera aiming, with movement direction relative to the camera.
@@ -53,7 +54,7 @@ This is an early playable foundation, not a finished Battle Royale game. The cur
 3. Expand the weapon sandbox with weapon selection, reload, and polished hit feedback.
 4. Replace procedural character motion and prototype models with authored skeletal rigs, motion-captured-quality animation sets, and full animation blending.
 5. Add a proper plane insertion sequence and full battle royale match start.
-6. Expand loot variety, weapon inventory, match flow, and shrinking safe zone.
+6. Expand loot variety, weapon inventory, match flow, and safe-zone phases.
 7. Add lobby, cosmetics, rewards, and store interfaces.
 8. Develop online services and multiplayer infrastructure after offline gameplay is stable.
 9. Develop the separate WARFOX ADMIN application.
