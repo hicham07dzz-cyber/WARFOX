@@ -543,3 +543,17 @@ func _fire_arcade_ray() -> void:
 	var collider = hit.get("collider")
 	if collider != null and collider.has_method("receive_hit"):
 		collider.receive_hit(HIT_DAMAGE)
+
+
+func apply_pickup(pickup_type: String, amount: int) -> bool:
+	if is_knocked_out or amount <= 0:
+		return false
+	if pickup_type == "ammo":
+		var before := reserve_ammo
+		reserve_ammo = mini(300, reserve_ammo + amount)
+		return reserve_ammo > before
+	if pickup_type == "medkit":
+		var before := medkits
+		medkits = mini(5, medkits + amount)
+		return medkits > before
+	return false
