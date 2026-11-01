@@ -11,6 +11,7 @@ var heal_pulse := false
 var parachute_pulse := false
 var health_bar: ProgressBar
 var health_text: Label
+var medkit_button: Button
 
 func _ready() -> void:
 	_build_hud()
@@ -134,18 +135,18 @@ func _build_hud() -> void:
 	fire.button_down.connect(func(): fire_pulse = true)
 	root.add_child(fire)
 
-	var medkit := Button.new()
-	medkit.text = "MEDKIT"
-	medkit.size = Vector2(104, 52)
-	medkit.anchor_left = 1.0
-	medkit.anchor_top = 1.0
-	medkit.anchor_right = 1.0
-	medkit.anchor_bottom = 1.0
-	medkit.position = Vector2(-126, -270)
-	medkit.add_theme_font_size_override("font_size", 15)
-	_style_button(medkit, Color(0.16, 0.48, 0.28))
-	medkit.pressed.connect(func(): heal_pulse = true)
-	root.add_child(medkit)
+	medkit_button = Button.new()
+	medkit_button.text = "MEDKIT x3"
+	medkit_button.size = Vector2(104, 52)
+	medkit_button.anchor_left = 1.0
+	medkit_button.anchor_top = 1.0
+	medkit_button.anchor_right = 1.0
+	medkit_button.anchor_bottom = 1.0
+	medkit_button.position = Vector2(-126, -270)
+	medkit_button.add_theme_font_size_override("font_size", 15)
+	_style_button(medkit_button, Color(0.16, 0.48, 0.28))
+	medkit_button.pressed.connect(func(): heal_pulse = true)
+	root.add_child(medkit_button)
 
 	var chute := Button.new()
 	chute.text = "CHUTE"
@@ -199,6 +200,9 @@ func _process(_delta: float) -> void:
 		if health_bar != null:
 			health_bar.value = player.health
 			health_text.text = "HP " + str(player.health) + " / 100"
+		if medkit_button != null:
+			medkit_button.text = "MEDKIT x" + str(player.medkits)
+			medkit_button.disabled = player.medkits <= 0 or player.health >= 100 or player.healing
 	jump_pulse = false
 	fire_pulse = false
 	heal_pulse = false
