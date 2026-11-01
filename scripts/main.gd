@@ -14,6 +14,12 @@ var safe_zone_radius := 520.0
 var safe_zone_last_visual_radius := 520.0
 
 func _ready() -> void:
+	var account_manager := Node.new()
+	account_manager.name = "WARFOX_Account"
+	account_manager.set_script(load("res://scripts/account_manager.gd"))
+	add_child(account_manager)
+	account_manager.call("register_match")
+	set_meta("account_manager", account_manager)
 	_setup_input()
 	_build_environment()
 	var terrain := _build_island()
