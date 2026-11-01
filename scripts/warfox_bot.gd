@@ -6,7 +6,9 @@ const GRAVITY := 22.0
 const MAX_HEALTH := 100
 const HIT_DAMAGE := 8
 const ATTACK_RANGE := 1.65
-const ATTACK_COOLDOWN := 1.1
+const SHOT_RANGE := 22.0
+const SHOT_DAMAGE := 7
+const ATTACK_COOLDOWN := 1.35
 const RESPAWN_DELAY := 3.0
 
 var health := MAX_HEALTH
@@ -15,6 +17,8 @@ var attack_timer := 0.0
 var spawn_position := Vector3.ZERO
 var visual_root: Node3D
 var body_material: StandardMaterial3D
+var shot_visual: MeshInstance3D
+var shot_flash_time := 0.0
 
 func _ready() -> void:
 	spawn_position = global_position
@@ -49,6 +53,21 @@ func _build_bot() -> void:
 	for side in [-1.0, 1.0]:
 		_add_part(CapsuleMesh.new(), Vector3(0.24, 0.62, 0.24), Vector3(side * 0.2, 0.43, 0), body_material)
 
+	shot_visual = MeshInstance3D.new()
+	shot_visual.name = "Bot_Muzzle_Tracer"
+	var tracer_mesh := BoxMesh.new()
+	tracer_mesh.size = Vector3(0.045, 0.045, 1.0)
+	shot_visual.mesh = tracer_mesh
+	var tracer_material := StandardMaterial3D.new()
+	tracer_material.albedo_color = Color(1.0, 0.46, 0.12)
+	tracer_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	tracer_material.emission_enabled = true
+	tracer_material.emission = Color(1.0, 0.20, 0.035)
+	tracer_material.emission_energy_multiplier = 3.0
+	shot_visual.material_override = tracer_material
+	shot_visual.visible = false
+	add_child(shot_visual)
+
 	var marker := Label3D.new()
 	marker.name = "BotHealthLabel"
 	marker.text = "BOT 100"
@@ -70,6 +89,23 @@ func _add_part(mesh: PrimitiveMesh, dimensions: Vector3, pos: Vector3, material:
 	part.material_override = material
 	visual_root.add_child(part)
 
+func _process(delta: float) -> void:
+	shot_flash_time = maxf(0.0, shot_flash_time - delta)
+	if shot_visual != null:
+		shot_visual.visible = shot_flash_time > 0.0
+
+func _show_shot_tracer() -> void:
+	if shot_visual == null or player == null:
+		return
+	var start := global_position + Vector3.UP * 1.35 + (-global_transform.basis.z * 0.45)
+	var finish := player.global_position + Vector3.UP * 1.0
+	var segment := finish - start
+	shot_visual.global_position = start + segment * 0.5
+	shot_visual.look_at(finish, Vector3.UP)
+	shot_visual.scale = Vector3(1.0, 1.0, maxf(0.25, segment.length()))
+	shot_flash_time = 0.09
+	shot_visual.visible = true
+
 func _physics_process(delta: float) -> void:
 	attack_timer = maxf(0.0, attack_timer - delta)
 	if player == null or not is_instance_valid(player):
@@ -85,18 +121,29 @@ func _physics_process(delta: float) -> void:
 
 	var offset := player.global_position - global_position
 	var flat := Vector3(offset.x, 0.0, offset.z)
-	if flat.length() < 24.0 and flat.length() > ATTACK_RANGE:
-		var direction := flat.normalized()
-		velocity.x = direction.x * MOVE_SPEED
-		velocity.z = direction.z * MOVE_SPEED
-		rotation.y = atan2(-direction.x, -direction.z)
-	elif flat.length() <= ATTACK_RANGE:
+	var distance := flat.length()
+	if distance < SHOT_RANGE and distance > ATTACK_RANGE:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if flat.length() > 0.01:
+			rotation.y = atan2(-flat.normalized().x, -flat.normalized().z)
+		if attack_timer <= 0.0 and _can_see_player():
+			if player.has_method("receive_damage"):
+				player.receive_damage(SHOT_DAMAGE)
+			_show_shot_tracer()
+			attack_timer = ATTACK_COOLDOWN
+	elif distance <= ATTACK_RANGE:
 		velocity.x = 0.0
 		velocity.z = 0.0
 		if attack_timer <= 0.0 and _can_see_player():
 			if player.has_method("receive_damage"):
 				player.receive_damage(HIT_DAMAGE)
 			attack_timer = ATTACK_COOLDOWN
+	elif distance < 38.0:
+		var direction := flat.normalized()
+		velocity.x = direction.x * MOVE_SPEED
+		velocity.z = direction.z * MOVE_SPEED
+		rotation.y = atan2(-direction.x, -direction.z)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, MOVE_SPEED * delta)
 		velocity.z = move_toward(velocity.z, 0.0, MOVE_SPEED * delta)
