@@ -11,6 +11,7 @@ func _ready() -> void:
 	_build_water()
 	_build_landmarks()
 	_spawn_player(terrain)
+	_spawn_training_targets()
 	_build_hud()
 
 func _setup_input() -> void:
@@ -21,6 +22,10 @@ func _setup_input() -> void:
 	_add_key("jump", KEY_SPACE)
 	_add_key("sprint", KEY_SHIFT)
 	_add_key("crouch", KEY_CTRL)
+	_add_key("fire", KEY_F)
+	var mouse_fire := InputEventMouseButton.new()
+	mouse_fire.button_index = MOUSE_BUTTON_LEFT
+	InputMap.action_add_event("fire", mouse_fire)
 
 func _add_key(action: String, key: Key) -> void:
 	if not InputMap.has_action(action):
@@ -184,3 +189,12 @@ func _build_hud() -> void:
 	hud.set_script(hud_script)
 	add_child(hud)
 	hud.player = get_meta("player")
+
+func _spawn_training_targets() -> void:
+	var target_script = load("res://scripts/training_target.gd")
+	for x in [-4.0, 0.0, 4.0]:
+		var target := StaticBody3D.new()
+		target.name = "Training_Target_" + str(int(x))
+		target.set_script(target_script)
+		target.position = Vector3(x, _height_at(x, 54.0), 54.0)
+		add_child(target)
