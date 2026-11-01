@@ -27,6 +27,7 @@ func _ready() -> void:
 	_build_water()
 	_build_landmarks()
 	_build_nature_dressing()
+	_build_roads()
 	_spawn_player(terrain)
 	_build_transport_plane()
 	_spawn_training_targets()
@@ -525,3 +526,61 @@ func _spawn_loot() -> void:
 		var point: Vector2 = data["position"]
 		pickup.position = Vector3(point.x, _height_at(point.x, point.y) + 0.9, point.y)
 		add_child(pickup)
+
+
+# Curved terrain-following roads connect the ten named regions.
+# Roads are generated as one static mesh per route to keep node counts low.
+func _build_roads() -> void:
+	var road_material := StandardMaterial3D.new()
+	road_material.albedo_color = Color(0.105, 0.12, 0.125)
+	road_material.roughness = 0.96
+	road_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var route_sets: Array = [
+		[Vector2(-12, 8), Vector2(-72, -18), Vector2(-145, -42), Vector2(-235, -80)],
+		[Vector2(10, 5), Vector2(82, 34), Vector2(160, 75), Vector2(245, 115)],
+		[Vector2(4, 18), Vector2(28, 105), Vector2(48, 205), Vector2(60, 300)],
+		[Vector2(-8, 15), Vector2(-92, 70), Vector2(-205, 142), Vector2(-330, 210)],
+		[Vector2(12, -8), Vector2(105, -58), Vector2(220, -112), Vector2(350, -180)],
+		[Vector2(-12, -10), Vector2(-120, -78), Vector2(-255, -150), Vector2(-410, -230)],
+		[Vector2(-8, 18), Vector2(-52, 112), Vector2(-100, 226), Vector2(-150, 350)],
+		[Vector2(15, 5), Vector2(120, 70), Vector2(250, 145), Vector2(410, 220)],
+		[Vector2(5, -18), Vector2(48, -115), Vector2(95, -245), Vector2(150, -390)],
+		[Vector2(-235, -80), Vector2(-180, -190), Vector2(-95, -300), Vector2(0, -405), Vector2(150, -390)]
+	]
+	for index in range(route_sets.size()):
+		_add_road(route_sets[index], 8.5 if index < 9 else 6.5, road_material)
+
+func _add_road(points: Array, road_width: float, road_material: Material) -> void:
+	if points.size() < 2:
+		return
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var half_width := road_width * 0.5
+	for index in range(points.size() - 1):
+		var start: Vector2 = points[index]
+		var finish: Vector2 = points[index + 1]
+		var direction := (finish - start).normalized()
+		if direction.length_squared() < 0.001:
+			continue
+		var side := Vector2(-direction.y, direction.x) * half_width
+		var left_start := start + side
+		var right_start := start - side
+		var left_end := finish + side
+		var right_end := finish - side
+		var a := Vector3(left_start.x, _height_at(left_start.x, left_start.y) + 0.34, left_start.y)
+		var b := Vector3(right_start.x, _height_at(right_start.x, right_start.y) + 0.34, right_start.y)
+		var c := Vector3(left_end.x, _height_at(left_end.x, left_end.y) + 0.34, left_end.y)
+		var d := Vector3(right_end.x, _height_at(right_end.x, right_end.y) + 0.34, right_end.y)
+		surface.add_vertex(a)
+		surface.add_vertex(b)
+		surface.add_vertex(c)
+		surface.add_vertex(c)
+		surface.add_vertex(b)
+		surface.add_vertex(d)
+	surface.generate_normals()
+	var road := MeshInstance3D.new()
+	road.name = "WARFOX_Road_Route"
+	road.mesh = surface.commit()
+	road.material_override = road_material
+	add_child(road)
