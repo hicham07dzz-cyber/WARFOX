@@ -20,6 +20,16 @@ const HIT_DAMAGE := 25
 var camera_pivot: Node3D
 var collision_capsule: CollisionShape3D
 var visual_root: Node3D
+var left_arm_pivot: Node3D
+var right_arm_pivot: Node3D
+var left_leg_pivot: Node3D
+var right_leg_pivot: Node3D
+var animation_clock := 0.0
+var healing := false
+var heal_time := 0.0
+var parachute_deployed := false
+var parachute_visual: Node3D
+var medkit_visual: MeshInstance3D
 var standing_height := 1.85
 var crouched_height := 1.15
 const MAX_HEALTH := 100
@@ -84,30 +94,72 @@ func _build_visual() -> void:
 	visual_root.name = "TacticalSoldierModel"
 	add_child(visual_root)
 
-	var dark := _material(Color(0.075, 0.105, 0.12), 0.12)
-	var armor := _material(Color(0.16, 0.21, 0.20), 0.08)
-	var fabric := _material(Color(0.27, 0.29, 0.23))
-	var accent := _material(Color(0.88, 0.25, 0.055), 0.18, 0.42)
+	var dark := _material(Color(0.055, 0.075, 0.085), 0.16)
+	var armor := _material(Color(0.12, 0.19, 0.20), 0.18)
+	var fabric := _material(Color(0.25, 0.29, 0.24))
+	var accent := _material(Color(0.95, 0.29, 0.055), 0.2, 0.4)
 	var skin := _material(Color(0.55, 0.38, 0.27))
 
 	_add_box(visual_root, "Torso_Armor", Vector3(0.68, 0.68, 0.36), Vector3(0, 1.22, 0), armor)
 	_add_box(visual_root, "Chest_Plate", Vector3(0.48, 0.30, 0.045), Vector3(0, 1.31, -0.205), dark)
 	_add_box(visual_root, "Chest_Insignia", Vector3(0.18, 0.055, 0.025), Vector3(0, 1.38, -0.234), accent)
 	_add_box(visual_root, "Belt", Vector3(0.66, 0.13, 0.37), Vector3(0, 0.84, 0), dark)
-
 	_add_capsule(visual_root, "Head", 0.205, 0.43, Vector3(0, 1.79, 0), skin)
 	_add_box(visual_root, "Helmet", Vector3(0.47, 0.16, 0.46), Vector3(0, 1.99, 0.015), dark)
 	_add_box(visual_root, "Helmet_Visor", Vector3(0.32, 0.055, 0.025), Vector3(0, 1.91, -0.222), accent)
-
-	for side in [-1.0, 1.0]:
-		_add_capsule(visual_root, "UpperArm", 0.13, 0.48, Vector3(side * 0.43, 1.27, 0), fabric)
-		_add_capsule(visual_root, "Forearm_Guard", 0.115, 0.38, Vector3(side * 0.45, 0.91, -0.015), armor)
-		_add_capsule(visual_root, "Thigh", 0.17, 0.52, Vector3(side * 0.19, 0.56, 0), fabric)
-		_add_capsule(visual_root, "Boot_Leg", 0.135, 0.43, Vector3(side * 0.19, 0.22, -0.035), dark)
-		_add_box(visual_root, "Boot", Vector3(0.27, 0.13, 0.40), Vector3(side * 0.19, 0.075, -0.09), dark)
-
 	_add_box(visual_root, "Backpack", Vector3(0.48, 0.55, 0.22), Vector3(0, 1.24, 0.27), dark)
 	_add_box(visual_root, "Shoulder_Patch", Vector3(0.16, 0.12, 0.08), Vector3(-0.43, 1.43, 0), accent)
+
+	left_arm_pivot = Node3D.new()
+	left_arm_pivot.name = "LeftArm_Animated"
+	left_arm_pivot.position = Vector3(-0.39, 1.48, 0)
+	visual_root.add_child(left_arm_pivot)
+	_add_capsule(left_arm_pivot, "UpperArm", 0.13, 0.48, Vector3(0, -0.20, 0), fabric)
+	_add_capsule(left_arm_pivot, "Forearm_Guard", 0.115, 0.38, Vector3(0.02, -0.55, -0.015), armor)
+
+	right_arm_pivot = Node3D.new()
+	right_arm_pivot.name = "RightArm_Animated"
+	right_arm_pivot.position = Vector3(0.39, 1.48, 0)
+	visual_root.add_child(right_arm_pivot)
+	_add_capsule(right_arm_pivot, "UpperArm", 0.13, 0.48, Vector3(0, -0.20, 0), fabric)
+	_add_capsule(right_arm_pivot, "Forearm_Guard", 0.115, 0.38, Vector3(-0.02, -0.55, -0.015), armor)
+
+	left_leg_pivot = Node3D.new()
+	left_leg_pivot.name = "LeftLeg_Animated"
+	left_leg_pivot.position = Vector3(-0.19, 0.82, 0)
+	visual_root.add_child(left_leg_pivot)
+	_add_capsule(left_leg_pivot, "Thigh", 0.17, 0.52, Vector3(0, -0.22, 0), fabric)
+	_add_capsule(left_leg_pivot, "Boot_Leg", 0.135, 0.43, Vector3(0, -0.57, -0.035), dark)
+	_add_box(left_leg_pivot, "Boot", Vector3(0.27, 0.13, 0.40), Vector3(0, -0.74, -0.09), dark)
+
+	right_leg_pivot = Node3D.new()
+	right_leg_pivot.name = "RightLeg_Animated"
+	right_leg_pivot.position = Vector3(0.19, 0.82, 0)
+	visual_root.add_child(right_leg_pivot)
+	_add_capsule(right_leg_pivot, "Thigh", 0.17, 0.52, Vector3(0, -0.22, 0), fabric)
+	_add_capsule(right_leg_pivot, "Boot_Leg", 0.135, 0.43, Vector3(0, -0.57, -0.035), dark)
+	_add_box(right_leg_pivot, "Boot", Vector3(0.27, 0.13, 0.40), Vector3(0, -0.74, -0.09), dark)
+
+	medkit_visual = _add_box(right_arm_pivot, "Medkit", Vector3(0.22, 0.18, 0.16), Vector3(0, -0.78, -0.12), _material(Color(0.82, 0.84, 0.78)))
+	medkit_visual.visible = false
+	_add_box(right_arm_pivot, "Medkit_Cross", Vector3(0.045, 0.13, 0.018), Vector3(0, -0.78, -0.205), accent).visible = false
+
+	parachute_visual = Node3D.new()
+	parachute_visual.name = "Parachute_Visual"
+	parachute_visual.position = Vector3(0, 3.25, 0.12)
+	parachute_visual.visible = false
+	visual_root.add_child(parachute_visual)
+	var canopy := MeshInstance3D.new()
+	var canopy_mesh := SphereMesh.new()
+	canopy_mesh.radius = 1.0
+	canopy_mesh.height = 0.8
+	canopy_mesh.radial_segments = 24
+	canopy_mesh.rings = 12
+	canopy.mesh = canopy_mesh
+	canopy.scale = Vector3(2.15, 0.52, 1.05)
+	var canopy_mat := _material(Color(0.92, 0.27, 0.055), 0.08, 0.48)
+	canopy.material_override = canopy_mat
+	parachute_visual.add_child(canopy)
 
 func _build_camera() -> void:
 	camera_pivot = Node3D.new()
@@ -128,12 +180,32 @@ func _build_camera() -> void:
 	camera.current = true
 	spring.add_child(camera)
 
+func start_healing() -> void:
+	if healing or health >= MAX_HEALTH or is_knocked_out:
+		return
+	healing = true
+	heal_time = 3.0
+	if medkit_visual != null:
+		medkit_visual.visible = true
+
+func deploy_parachute() -> void:
+	if is_on_floor() or parachute_deployed or is_knocked_out:
+		return
+	parachute_deployed = true
+	parachute_visual.visible = true
+
 func receive_damage(amount: int) -> void:
 	if is_knocked_out or amount <= 0:
 		return
 	health = maxi(0, health - amount)
 	if health == 0:
 		is_knocked_out = true
+		healing = false
+		parachute_deployed = false
+		if parachute_visual != null:
+			parachute_visual.visible = false
+		if medkit_visual != null:
+			medkit_visual.visible = false
 		velocity = Vector3.ZERO
 		await get_tree().create_timer(2.0).timeout
 		if not is_inside_tree():
@@ -147,12 +219,16 @@ func add_look_delta(delta_pixels: Vector2) -> void:
 	camera_pivot.rotation.y -= delta_pixels.x * LOOK_SENSITIVITY
 	camera_pivot.rotation.x = clampf(camera_pivot.rotation.x - delta_pixels.y * LOOK_SENSITIVITY, MIN_PITCH, MAX_PITCH)
 
-func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool = false, fire: bool = false) -> void:
+func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool = false, fire: bool = false, heal: bool = false, parachute: bool = false) -> void:
 	move_input = direction.limit_length(1.0)
 	sprinting = sprint
 	crouching = crouch
 	jump_requested = jump_requested or jump
 	fire_requested = fire_requested or fire
+	if heal:
+		start_healing()
+	if parachute:
+		deploy_parachute()
 
 func _set_crouch_state() -> void:
 	var wants_crouch := crouching or Input.is_action_pressed("crouch")
@@ -163,6 +239,52 @@ func _set_crouch_state() -> void:
 		collision_capsule.position.y = capsule.height * 0.5
 		visual_root.scale.y = capsule.height / standing_height
 		visual_root.position.y = 0.0
+
+
+func _process(delta: float) -> void:
+	animation_clock += delta
+	_update_character_animation(delta)
+
+func _update_character_animation(delta: float) -> void:
+	if visual_root == null:
+		return
+	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
+	var moving := horizontal_speed > 0.35 and is_on_floor() and not healing
+	var crouch_blend := 1.0 if crouching or Input.is_action_pressed("crouch") else 0.0
+	var run_blend := clampf(horizontal_speed / SPRINT_SPEED, 0.0, 1.0) if moving else 0.0
+	var stride := sin(animation_clock * (8.0 + horizontal_speed * 1.25)) * run_blend
+	var idle_bob := sin(animation_clock * 2.2) * 0.018
+	visual_root.position.y = idle_bob + (0.025 if moving else 0.0)
+	left_leg_pivot.rotation.x = stride * 0.62 - crouch_blend * 0.38
+	right_leg_pivot.rotation.x = -stride * 0.62 - crouch_blend * 0.38
+	left_arm_pivot.rotation.x = -stride * 0.48 + crouch_blend * 0.48
+	right_arm_pivot.rotation.x = stride * 0.48 + crouch_blend * 0.48
+	if not is_on_floor() and not parachute_deployed:
+		left_arm_pivot.rotation.x = -0.75
+		right_arm_pivot.rotation.x = -0.75
+		left_leg_pivot.rotation.x = 0.25
+		right_leg_pivot.rotation.x = -0.25
+	if healing:
+		left_arm_pivot.rotation.x = -0.9
+		right_arm_pivot.rotation.x = -1.25 + sin(animation_clock * 7.0) * 0.08
+		if medkit_visual != null:
+			medkit_visual.visible = true
+		heal_time -= delta
+		if heal_time <= 0.0:
+			healing = false
+			health = mini(MAX_HEALTH, health + 50)
+			if medkit_visual != null:
+				medkit_visual.visible = false
+	if parachute_deployed:
+		left_arm_pivot.rotation.z = -0.65
+		right_arm_pivot.rotation.z = 0.65
+		velocity.y = maxf(velocity.y, -3.2)
+		if is_on_floor():
+			parachute_deployed = false
+			parachute_visual.visible = false
+	else:
+		left_arm_pivot.rotation.z = move_toward(left_arm_pivot.rotation.z, 0.0, delta * 5.0)
+		right_arm_pivot.rotation.z = move_toward(right_arm_pivot.rotation.z, 0.0, delta * 5.0)
 
 func _physics_process(delta: float) -> void:
 	if is_knocked_out:
