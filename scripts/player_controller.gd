@@ -23,6 +23,10 @@ var is_reloading := false
 var reload_time := 0.0
 var weapon_root: Node3D
 var magazine_visual: MeshInstance3D
+var magazine_stripe: MeshInstance3D
+var muzzle_flash: MeshInstance3D
+var muzzle_light: OmniLight3D
+var muzzle_flash_time := 0.0
 var reload_animation_time := 0.0
 var fox_spirit: Node3D
 const FIRE_INTERVAL := 0.22
@@ -205,7 +209,30 @@ func _build_weapon() -> void:
 	barrel.material_override = gun_metal
 	weapon_root.add_child(barrel)
 	magazine_visual = _add_box(weapon_root, "Detachable_Magazine", Vector3(0.11, 0.25, 0.15), Vector3(0, -0.20, -0.03), gun_dark)
-	_add_box(weapon_root, "Magazine_Red_Stripe", Vector3(0.115, 0.035, 0.16), Vector3(0, -0.19, -0.03), red)
+	magazine_stripe = _add_box(weapon_root, "Magazine_Red_Stripe", Vector3(0.115, 0.035, 0.16), Vector3(0, -0.19, -0.03), red)
+	muzzle_flash = MeshInstance3D.new()
+	muzzle_flash.name = "Muzzle_Flash"
+	var flash_mesh := SphereMesh.new()
+	flash_mesh.radius = 0.11
+	flash_mesh.height = 0.22
+	muzzle_flash.mesh = flash_mesh
+	muzzle_flash.position = Vector3(0, 0.015, -1.24)
+	var flash_mat := StandardMaterial3D.new()
+	flash_mat.albedo_color = Color(1.0, 0.48, 0.08)
+	flash_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	flash_mat.emission_enabled = true
+	flash_mat.emission = Color(1.0, 0.22, 0.025)
+	flash_mat.emission_energy_multiplier = 5.0
+	muzzle_flash.material_override = flash_mat
+	muzzle_flash.visible = false
+	weapon_root.add_child(muzzle_flash)
+	muzzle_light = OmniLight3D.new()
+	muzzle_light.name = "Muzzle_Flash_Light"
+	muzzle_light.position = muzzle_flash.position
+	muzzle_light.light_color = Color(1.0, 0.34, 0.08)
+	muzzle_light.light_energy = 0.0
+	muzzle_light.omni_range = 5.0
+	weapon_root.add_child(muzzle_light)
 
 func _build_fox_spirit() -> void:
 	fox_spirit = Node3D.new()
@@ -253,6 +280,8 @@ func start_reload() -> void:
 	reload_animation_time = 1.75
 	if magazine_visual != null:
 		magazine_visual.visible = false
+	if magazine_stripe != null:
+		magazine_stripe.visible = false
 
 func _build_camera() -> void:
 	camera_pivot = Node3D.new()
@@ -351,6 +380,11 @@ func _update_character_animation(delta: float) -> void:
 		return
 	fire_animation_time = maxf(0.0, fire_animation_time - delta)
 	reload_animation_time = maxf(0.0, reload_animation_time - delta)
+	muzzle_flash_time = maxf(0.0, muzzle_flash_time - delta)
+	if muzzle_flash != null:
+		muzzle_flash.visible = muzzle_flash_time > 0.0
+	if muzzle_light != null:
+		muzzle_light.light_energy = 2.8 if muzzle_flash_time > 0.0 else 0.0
 	if fox_spirit != null:
 		var fox_cycle := fposmod(animation_clock, 10.0)
 		fox_spirit.visible = fox_cycle > 5.8 and fox_cycle < 8.5
@@ -431,6 +465,8 @@ func _physics_process(delta: float) -> void:
 			is_reloading = false
 			if magazine_visual != null:
 				magazine_visual.visible = true
+			if magazine_stripe != null:
+				magazine_stripe.visible = true
 	if Input.is_action_just_pressed("parachute"):
 		deploy_parachute()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
@@ -474,6 +510,7 @@ func _fire_arcade_ray() -> void:
 	fire_cooldown = FIRE_INTERVAL
 	ammo -= 1
 	fire_animation_time = 0.14
+	muzzle_flash_time = 0.065
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
