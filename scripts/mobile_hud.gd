@@ -40,6 +40,16 @@ func _build_hud() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(root)
 
+	var look_area := TouchLook.new()
+	look_area.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	look_area.anchor_left = 0.5
+	look_area.mouse_filter = Control.MOUSE_FILTER_STOP
+	look_area.look_changed.connect(func(value: Vector2):
+		if player != null:
+			player.add_look_delta(value)
+	)
+	root.add_child(look_area)
+
 	var title := Label.new()
 	title.text = "HICHAM  |  WARFOX"
 	title.position = Vector2(24, 18)
@@ -169,3 +179,18 @@ class TouchStick extends Control:
 		knob = (local_position - Vector2(75, 75)).limit_length(RADIUS - 18.0)
 		stick_changed.emit(Vector2(knob.x / (RADIUS - 18.0), -knob.y / (RADIUS - 18.0)))
 		queue_redraw()
+
+class TouchLook extends Control:
+	signal look_changed(value: Vector2)
+	var active_touch := -1
+
+	func _gui_input(event: InputEvent) -> void:
+		if event is InputEventScreenTouch:
+			if event.pressed and active_touch == -1:
+				active_touch = event.index
+			elif not event.pressed and event.index == active_touch:
+				active_touch = -1
+		elif event is InputEventScreenDrag and event.index == active_touch:
+			look_changed.emit(event.relative)
+		elif event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+			look_changed.emit(event.relative)
