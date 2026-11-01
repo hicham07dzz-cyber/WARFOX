@@ -245,6 +245,15 @@ func _build_fox_spirit() -> void:
 	tail.rotation.x = -0.9
 	tail.rotation.z = 0.55
 
+func start_reload() -> void:
+	if is_reloading or is_knocked_out or ammo >= MAGAZINE_SIZE or reserve_ammo <= 0:
+		return
+	is_reloading = true
+	reload_time = 1.75
+	reload_animation_time = 1.75
+	if magazine_visual != null:
+		magazine_visual.visible = false
+
 func _build_camera() -> void:
 	camera_pivot = Node3D.new()
 	camera_pivot.name = "CameraPivot"
