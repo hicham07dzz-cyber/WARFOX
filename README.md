@@ -12,7 +12,7 @@ The current prototype includes:
 - A CharacterBody3D capsule collider for the player, with walking, sprinting, jumping, and crouching.
 - A SpringArm camera to help prevent the camera from passing through nearby geometry.
 - An arcade raycast firing system with a centered reticle and mobile fire button.
-- An original low-poly assault rifle with receiver, handguard, stock, sight, barrel, and detachable magazine.
+- An original low-poly assault rifle with receiver, handguard, stock, sight, barrel, detachable magazine, animated muzzle flash, and brief muzzle lighting.
 - A 30-round magazine, 120 reserve rounds, timed reload, reload animation, and mobile RELOAD control (R on keyboard).
 - A spectral red fox spirit that periodically appears on the soldier's shoulder, glows, pulses, and fades away.
 - Three training targets with health values, hit feedback, and automatic respawn.
