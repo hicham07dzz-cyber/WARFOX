@@ -31,6 +31,7 @@ var heal_time := 0.0
 var parachute_deployed := false
 var parachute_visual: Node3D
 var medkit_visual: MeshInstance3D
+var medkit_cross: MeshInstance3D
 var standing_height := 1.85
 var crouched_height := 1.15
 const MAX_HEALTH := 100
@@ -143,7 +144,8 @@ func _build_visual() -> void:
 
 	medkit_visual = _add_box(right_arm_pivot, "Medkit", Vector3(0.22, 0.18, 0.16), Vector3(0, -0.78, -0.12), _material(Color(0.82, 0.84, 0.78)))
 	medkit_visual.visible = false
-	_add_box(right_arm_pivot, "Medkit_Cross", Vector3(0.045, 0.13, 0.018), Vector3(0, -0.78, -0.205), accent).visible = false
+	medkit_cross = _add_box(right_arm_pivot, "Medkit_Cross", Vector3(0.045, 0.13, 0.018), Vector3(0, -0.78, -0.205), accent)
+	medkit_cross.visible = false
 
 	parachute_visual = Node3D.new()
 	parachute_visual.name = "Parachute_Visual"
@@ -189,6 +191,8 @@ func start_healing() -> void:
 	heal_time = 3.0
 	if medkit_visual != null:
 		medkit_visual.visible = true
+	if medkit_cross != null:
+		medkit_cross.visible = true
 
 func deploy_parachute() -> void:
 	if is_on_floor() or parachute_deployed or is_knocked_out:
@@ -208,6 +212,8 @@ func receive_damage(amount: int) -> void:
 			parachute_visual.visible = false
 		if medkit_visual != null:
 			medkit_visual.visible = false
+		if medkit_cross != null:
+			medkit_cross.visible = false
 		velocity = Vector3.ZERO
 		await get_tree().create_timer(2.0).timeout
 		if not is_inside_tree():
@@ -271,12 +277,16 @@ func _update_character_animation(delta: float) -> void:
 		right_arm_pivot.rotation.x = -1.25 + sin(animation_clock * 7.0) * 0.08
 		if medkit_visual != null:
 			medkit_visual.visible = true
+		if medkit_cross != null:
+			medkit_cross.visible = true
 		heal_time -= delta
 		if heal_time <= 0.0:
 			healing = false
 			health = mini(MAX_HEALTH, health + 50)
 			if medkit_visual != null:
 				medkit_visual.visible = false
+			if medkit_cross != null:
+				medkit_cross.visible = false
 	if parachute_deployed:
 		left_arm_pivot.rotation.z = -0.65
 		right_arm_pivot.rotation.z = 0.65
