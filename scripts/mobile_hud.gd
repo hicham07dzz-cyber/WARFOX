@@ -203,6 +203,16 @@ func _build_hud() -> void:
 	chute.pressed.connect(func(): parachute_pulse = true)
 	root.add_child(chute)
 
+	var radar := MiniRadar.new()
+	radar.name = "WARFOX_Mini_Map"
+	radar.player = player
+	radar.position = Vector2(-174, 92)
+	radar.anchor_left = 1.0
+	radar.anchor_right = 1.0
+	radar.size = Vector2(148, 148)
+	radar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(radar)
+
 	var sprint := Button.new()
 	sprint.text = "RUN"
 	sprint.size = Vector2(88, 54)
@@ -314,3 +324,48 @@ class TouchLook extends Control:
 			look_changed.emit(event.relative)
 		elif event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 			look_changed.emit(event.relative)
+
+
+class MiniRadar extends Control:
+	var player: WarfoxPlayer
+	var refresh_clock := 0.0
+	const RADAR_RANGE := 180.0
+	const RADAR_RADIUS := 66.0
+
+	func _process(delta: float) -> void:
+		refresh_clock += delta
+		if refresh_clock >= 0.18:
+			refresh_clock = 0.0
+			queue_redraw()
+
+	func _draw() -> void:
+		var center := Vector2(74, 74)
+		draw_circle(center, 72.0, Color(0.025, 0.045, 0.055, 0.82))
+		draw_arc(center, 72.0, 0.0, TAU, 64, Color(1.0, 0.42, 0.10, 0.92), 2.5)
+		draw_arc(center, 48.0, 0.0, TAU, 48, Color(0.55, 0.68, 0.70, 0.24), 1.0)
+		draw_arc(center, 24.0, 0.0, TAU, 48, Color(0.55, 0.68, 0.70, 0.18), 1.0)
+		draw_line(center + Vector2(-66, 0), center + Vector2(66, 0), Color(0.55, 0.68, 0.70, 0.16), 1.0)
+		draw_line(center + Vector2(0, -66), center + Vector2(0, 66), Color(0.55, 0.68, 0.70, 0.16), 1.0)
+		if player == null or not is_instance_valid(player):
+			return
+		var world := player.get_parent()
+		if world == null:
+			return
+		var safe_radius := float(world.get("safe_zone_radius")) if world.get("safe_zone_radius") != null else RADAR_RANGE
+		var safe_screen_radius := clampf(safe_radius / RADAR_RANGE * RADAR_RADIUS, 2.0, RADAR_RADIUS)
+		draw_arc(center, safe_screen_radius, 0.0, TAU, 64, Color(0.12, 0.78, 1.0, 0.82), 1.8)
+		var player_pos := Vector2(player.global_position.x, player.global_position.z)
+		for node in world.get_children():
+			if node == player or not node is Node3D:
+				continue
+			var point := Vector2(node.global_position.x, node.global_position.z) - player_pos
+			if point.length() > RADAR_RANGE:
+				continue
+			var map_point := center + Vector2(point.x, point.y) / RADAR_RANGE * RADAR_RADIUS
+			if node.name.contains("Bot"):
+				draw_circle(map_point, 4.0, Color(1.0, 0.16, 0.12, 0.95))
+			elif node.name.begins_with("Loot_"):
+				var loot_color := Color(1.0, 0.72, 0.12, 0.95) if node.name.contains("Ammo") else Color(0.25, 1.0, 0.55, 0.95)
+				draw_rect(Rect2(map_point - Vector2(3, 3), Vector2(6, 6)), loot_color)
+		draw_colored_polygon(PackedVector2Array([center + Vector2(0, -9), center + Vector2(-6, 6), center + Vector2(6, 6)]), Color(0.95, 0.98, 1.0))
+		draw_string(ThemeDB.fallback_font, Vector2(67, 15), "N", HORIZONTAL_ALIGNMENT_CENTER, -1, 10, Color(0.9, 0.95, 1.0, 0.9))
