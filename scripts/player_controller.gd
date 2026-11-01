@@ -22,6 +22,9 @@ var collision_capsule: CollisionShape3D
 var visual_root: Node3D
 var standing_height := 1.85
 var crouched_height := 1.15
+const LOOK_SENSITIVITY := 0.0035
+const MIN_PITCH := deg_to_rad(-32.0)
+const MAX_PITCH := deg_to_rad(24.0)
 
 func _ready() -> void:
 	floor_snap_length = 0.25
@@ -115,9 +118,13 @@ func _build_camera() -> void:
 	var camera := Camera3D.new()
 	camera.name = "ThirdPersonCamera"
 	camera.position = Vector3(0, 0.25, 0)
-	camera.rotation_degrees.x = -7.0
+	camera.rotation_degrees.x = 0.0
 	camera.current = true
 	spring.add_child(camera)
+
+func add_look_delta(delta_pixels: Vector2) -> void:
+	camera_pivot.rotation.y -= delta_pixels.x * LOOK_SENSITIVITY
+	camera_pivot.rotation.x = clampf(camera_pivot.rotation.x - delta_pixels.y * LOOK_SENSITIVITY, MIN_PITCH, MAX_PITCH)
 
 func set_mobile_input(direction: Vector2, sprint: bool, jump: bool, crouch: bool = false, fire: bool = false) -> void:
 	move_input = direction.limit_length(1.0)
@@ -144,8 +151,12 @@ func _physics_process(delta: float) -> void:
 	_set_crouch_state()
 	var keyboard := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var input_dir := move_input if move_input.length() > 0.08 else keyboard
-	var forward := -global_transform.basis.z
-	var right := global_transform.basis.x
+	var forward := -camera_pivot.global_transform.basis.z
+	var right := camera_pivot.global_transform.basis.x
+	forward.y = 0.0
+	right.y = 0.0
+	forward = forward.normalized()
+	right = right.normalized()
 	var direction := (right * input_dir.x + forward * -input_dir.y).normalized()
 
 	var is_crouched := crouching or Input.is_action_pressed("crouch")
