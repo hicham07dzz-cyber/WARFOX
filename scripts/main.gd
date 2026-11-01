@@ -12,6 +12,7 @@ func _ready() -> void:
 	_build_landmarks()
 	_spawn_player(terrain)
 	_spawn_training_targets()
+	_spawn_bots()
 	_build_hud()
 
 func _setup_input() -> void:
@@ -198,3 +199,13 @@ func _spawn_training_targets() -> void:
 		target.set_script(target_script)
 		target.position = Vector3(x, _height_at(x, 54.0), 54.0)
 		add_child(target)
+
+
+func _spawn_bots() -> void:
+	var bot_script = load("res://scripts/warfox_bot.gd")
+	for point in [Vector2(-9.0, 56.0), Vector2(9.0, 56.0)]:
+		var bot := CharacterBody3D.new()
+		bot.name = "WARFOX_Training_Bot"
+		bot.set_script(bot_script)
+		bot.position = Vector3(point.x, _height_at(point.x, point.y), point.y)
+		add_child(bot)
