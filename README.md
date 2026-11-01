@@ -20,7 +20,7 @@ The current prototype includes:
 - Player health display, damage handling, and automatic respawn after health reaches zero.
 - Procedural character animation states for idle breathing, walking, running, crouching, jumping/falling, firing recoil, damage flinch, healing, parachute descent, and knockout.
 - Three-use medkit action with a timed healing animation and a visible remaining-use counter.
-- Deployable parachute visual and slowed descent while airborne.
+- Deployable parachute with horizontal steering, gentle wind drift, canopy animation, slowed descent, and a landing-roll animation.
 - Mobile joystick and touch buttons for movement, sprint, jump, crouch, and firing.
 - Right-side touch-drag camera aiming, with movement direction relative to the camera.
 - Desktop right-mouse camera look support.
@@ -50,7 +50,7 @@ This is an early playable foundation, not a finished Battle Royale game. The cha
 2. Fix any clipping, collision, camera, or touch-control bugs found during testing.
 3. Expand the weapon sandbox with weapon selection, reload, and polished hit feedback.
 4. Replace procedural character motion and prototype models with authored skeletal rigs, motion-captured-quality animation sets, and full animation blending.
-5. Add a proper plane insertion sequence, parachute steering, landing roll, and full battle royale match start.
+5. Add a proper plane insertion sequence and full battle royale match start.
 6. Add loot, inventory, health, match flow, and shrinking safe zone.
 7. Add lobby, cosmetics, rewards, and store interfaces.
 8. Develop online services and multiplayer infrastructure after offline gameplay is stable.
