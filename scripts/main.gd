@@ -226,9 +226,21 @@ func _spawn_training_targets() -> void:
 
 func _spawn_bots() -> void:
 	var bot_script = load("res://scripts/warfox_bot.gd")
-	for point in [Vector2(-9.0, 56.0), Vector2(9.0, 56.0)]:
+	# Distributed combatants across the island; two remain near the initial landing area.
+	var spawn_points := [
+		Vector2(-9.0, 56.0), Vector2(9.0, 56.0),
+		Vector2(-235.0, -80.0), Vector2(-205.0, -55.0),
+		Vector2(245.0, 115.0), Vector2(275.0, 135.0),
+		Vector2(60.0, 300.0), Vector2(95.0, 325.0),
+		Vector2(-330.0, 210.0), Vector2(-300.0, 235.0),
+		Vector2(360.0, -180.0), Vector2(325.0, -215.0),
+		Vector2(-410.0, -230.0), Vector2(-375.0, -265.0),
+		Vector2(150.0, -390.0), Vector2(190.0, -360.0)
+	]
+	for index in range(spawn_points.size()):
+		var point: Vector2 = spawn_points[index]
 		var bot := CharacterBody3D.new()
-		bot.name = "WARFOX_Training_Bot"
+		bot.name = "WARFOX_Bot_%02d" % (index + 1)
 		bot.set_script(bot_script)
 		bot.position = Vector3(point.x, _height_at(point.x, point.y), point.y)
 		add_child(bot)
