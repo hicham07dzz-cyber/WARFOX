@@ -30,6 +30,8 @@ var muzzle_flash_time := 0.0
 var reload_animation_time := 0.0
 var fox_spirit: Node3D
 var black_fox_skin: Node3D
+var black_fox_coat_left: Node3D
+var black_fox_coat_right: Node3D
 const FIRE_INTERVAL := 0.22
 const HIT_DAMAGE := 25
 var camera_pivot: Node3D
@@ -161,7 +163,7 @@ func _apply_skin_palette(skin_name: String) -> void:
 		black_fox_skin.visible = skin_name.begins_with("BLACK FOX")
 		_apply_black_fox_variant(skin_name)
 	if fox_spirit != null:
-		fox_spirit.visible = skin_name == "BLACK FOX" and fox_spirit.get_meta("spirit_active", false)
+		fox_spirit.visible = skin_name.begins_with("BLACK FOX") and fox_spirit.get_meta("spirit_active", false)
 	var armor_mat := _material(armor_color, 0.32, 0.48)
 	var fabric_mat := _material(fabric_color, 0.05, 0.78)
 	var accent_mat := _material(accent_color, 0.24, 0.4)
@@ -403,10 +405,18 @@ func _build_black_fox_skin() -> void:
 	_add_box(black_fox_skin, "BlackFox_Hood_Red_Seam", Vector3(0.025, 0.19, 0.035), Vector3(0, 2.14, -0.18), red)
 
 	# Long split coat tails, inspired by the reference silhouette.
-	var left_tail := _add_box(black_fox_skin, "BlackFox_Coat_Tail_Left", Vector3(0.34, 0.88, 0.10), Vector3(-0.34, 0.55, 0.12), cloth)
-	left_tail.rotation.z = -0.18
-	var right_tail := _add_box(black_fox_skin, "BlackFox_Coat_Tail_Right", Vector3(0.34, 0.92, 0.10), Vector3(0.34, 0.53, 0.12), cloth)
-	right_tail.rotation.z = 0.20
+	black_fox_coat_left = Node3D.new()
+	black_fox_coat_left.name = "BLACK_FOX_COAT_LEFT_RIG"
+	black_fox_coat_left.position = Vector3(-0.34, 0.99, 0.12)
+	black_fox_coat_left.rotation.z = -0.18
+	black_fox_skin.add_child(black_fox_coat_left)
+	_add_box(black_fox_coat_left, "BlackFox_Coat_Tail_Left", Vector3(0.34, 0.88, 0.10), Vector3(0, -0.44, 0), cloth)
+	black_fox_coat_right = Node3D.new()
+	black_fox_coat_right.name = "BLACK_FOX_COAT_RIGHT_RIG"
+	black_fox_coat_right.position = Vector3(0.34, 0.99, 0.12)
+	black_fox_coat_right.rotation.z = 0.20
+	black_fox_skin.add_child(black_fox_coat_right)
+	_add_box(black_fox_coat_right, "BlackFox_Coat_Tail_Right", Vector3(0.34, 0.92, 0.10), Vector3(0, -0.46, 0), cloth)
 	_add_box(black_fox_skin, "BlackFox_Coat_Edge_Left", Vector3(0.035, 0.86, 0.025), Vector3(-0.49, 0.55, 0.055), red).rotation.z = -0.18
 	_add_box(black_fox_skin, "BlackFox_Coat_Edge_Right", Vector3(0.035, 0.90, 0.025), Vector3(0.49, 0.53, 0.055), red).rotation.z = 0.20
 	_add_box(black_fox_skin, "BlackFox_Coat_Belt", Vector3(0.72, 0.075, 0.045), Vector3(0, 0.88, -0.225), red)
@@ -623,6 +633,13 @@ func _update_character_animation(delta: float) -> void:
 		muzzle_flash.visible = muzzle_flash_time > 0.0
 	if muzzle_light != null:
 		muzzle_light.light_energy = 2.8 if muzzle_flash_time > 0.0 else 0.0
+	if black_fox_coat_left != null and black_fox_skin != null and black_fox_skin.visible:
+		var coat_sway := sin(animation_clock * 5.0) * 0.10
+		var speed_factor := clampf(Vector2(velocity.x, velocity.z).length() / SPRINT_SPEED, 0.0, 1.0)
+		black_fox_coat_left.rotation.x = lerpf(black_fox_coat_left.rotation.x, -0.10 - coat_sway - speed_factor * 0.24, delta * 5.0)
+		black_fox_coat_right.rotation.x = lerpf(black_fox_coat_right.rotation.x, -0.10 + coat_sway - speed_factor * 0.24, delta * 5.0)
+		black_fox_coat_left.rotation.z = lerpf(black_fox_coat_left.rotation.z, -0.18 - coat_sway * 0.55, delta * 4.0)
+		black_fox_coat_right.rotation.z = lerpf(black_fox_coat_right.rotation.z, 0.20 + coat_sway * 0.55, delta * 4.0)
 	if fox_spirit != null:
 		var fox_cycle := fposmod(animation_clock, 10.0)
 		var fox_skin_equipped := black_fox_skin != null and black_fox_skin.visible
