@@ -6,6 +6,7 @@ const SAVE_PATH := "user://warfox_profile.cfg"
 const STARTING_CREDITS := 999999999
 
 const SKINS := [
+	"BLACK FOX",
 	"FOX COMMANDER",
 	"SHADOW RECON",
 	"DESERT PHANTOM",
@@ -26,7 +27,7 @@ const WEAPONS := [
 var credits := STARTING_CREDITS
 var owned_skins: Array[String] = []
 var owned_weapons: Array[String] = []
-var equipped_skin := "FOX COMMANDER"
+var equipped_skin := "BLACK FOX"
 var equipped_weapon := "WARFOX RIFLE"
 var total_kills := 0
 var matches_played := 0
@@ -41,7 +42,7 @@ func load_profile() -> void:
 		credits = int(config.get_value("account", "credits", STARTING_CREDITS))
 		total_kills = int(config.get_value("stats", "total_kills", 0))
 		matches_played = int(config.get_value("stats", "matches_played", 0))
-		equipped_skin = str(config.get_value("loadout", "skin", "FOX COMMANDER"))
+		equipped_skin = str(config.get_value("loadout", "skin", "BLACK FOX"))
 		equipped_weapon = str(config.get_value("loadout", "weapon", "WARFOX RIFLE"))
 	owned_skins.clear()
 	owned_weapons.clear()
