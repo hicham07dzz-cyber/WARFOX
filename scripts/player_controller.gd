@@ -561,4 +561,7 @@ func apply_pickup(pickup_type: String, amount: int) -> bool:
 
 
 func register_kill() -> void:
-    kills += 1
+	kills += 1
+	var account := get_parent().get_node_or_null("WARFOX_Account")
+	if account != null:
+		account.call("register_kill")
