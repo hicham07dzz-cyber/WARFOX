@@ -26,6 +26,7 @@ var left_leg_pivot: Node3D
 var right_leg_pivot: Node3D
 var animation_clock := 0.0
 var healing := false
+var medkits := 3
 var heal_time := 0.0
 var parachute_deployed := false
 var parachute_visual: Node3D
@@ -181,8 +182,9 @@ func _build_camera() -> void:
 	spring.add_child(camera)
 
 func start_healing() -> void:
-	if healing or health >= MAX_HEALTH or is_knocked_out:
+	if healing or health >= MAX_HEALTH or is_knocked_out or medkits <= 0:
 		return
+	medkits -= 1
 	healing = true
 	heal_time = 3.0
 	if medkit_visual != null:
@@ -289,6 +291,10 @@ func _update_character_animation(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if is_knocked_out:
 		return
+	if Input.is_action_just_pressed("heal"):
+		start_healing()
+	if Input.is_action_just_pressed("parachute"):
+		deploy_parachute()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
 	if fire_requested or Input.is_action_just_pressed("fire"):
 		_fire_arcade_ray()
