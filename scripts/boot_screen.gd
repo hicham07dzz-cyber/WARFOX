@@ -4,6 +4,9 @@ class_name WarfoxBootScreen
 var root: Control
 var intro_panel: Control
 var menu_panel: PanelContainer
+var settings_panel: PanelContainer
+var profile_panel: PanelContainer
+var account_manager: Node
 var progress_bar: ProgressBar
 var progress_label: Label
 var status_label: Label
@@ -173,12 +176,22 @@ func _build_interface() -> void:
 	start_button.pressed.connect(_start_game)
 	menu.add_child(start_button)
 
+	var profile_button := Button.new()
+	profile_button.text = "PLAYER PROFILE"
+	profile_button.custom_minimum_size = Vector2(0, 46)
+	_style_menu_button(profile_button, Color(0.16, 0.30, 0.35))
+	profile_button.pressed.connect(_show_profile)
+	menu.add_child(profile_button)
+
 	var settings_button := Button.new()
-	settings_button.text = "SETTINGS  •  COMING SOON"
-	settings_button.custom_minimum_size = Vector2(0, 48)
-	settings_button.disabled = true
+	settings_button.text = "SETTINGS"
+	settings_button.custom_minimum_size = Vector2(0, 46)
 	_style_menu_button(settings_button, Color(0.16, 0.25, 0.30))
+	settings_button.pressed.connect(_show_settings)
 	menu.add_child(settings_button)
+
+	_build_settings_panel()
+	_build_profile_panel()
 
 	var footer := Label.new()
 	footer.text = "BUILD  0.1  •  WARFOX PROJECT"
@@ -237,3 +250,123 @@ func _process(delta: float) -> void:
 func _start_game() -> void:
 	get_tree().paused = false
 	queue_free()
+
+
+
+func _build_settings_panel() -> void:
+	settings_panel = _make_secondary_panel("WARFOX  //  SETTINGS")
+	var content := settings_panel.get_child(0) as VBoxContainer
+	var volume_title := Label.new()
+	volume_title.text = "MASTER VOLUME"
+	volume_title.add_theme_color_override("font_color", Color(0.85, 0.91, 0.92))
+	content.add_child(volume_title)
+	var volume_value := Label.new()
+	volume_value.name = "Volume_Value"
+	volume_value.text = "100%"
+	volume_value.add_theme_color_override("font_color", Color(1.0, 0.55, 0.20))
+	content.add_child(volume_value)
+	var volume_slider := HSlider.new()
+	volume_slider.min_value = 0
+	volume_slider.max_value = 100
+	volume_slider.step = 1
+	volume_slider.value = _get_master_volume()
+	volume_slider.custom_minimum_size = Vector2(0, 34)
+	volume_slider.value_changed.connect(func(value: float):
+		_set_master_volume(value)
+		volume_value.text = str(int(value)) + "%"
+	)
+	content.add_child(volume_slider)
+	var note := Label.new()
+	note.text = "Mobile graphics presets will be added after device testing."
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.add_theme_color_override("font_color", Color(0.62, 0.72, 0.76))
+	note.add_theme_font_size_override("font_size", 12)
+	content.add_child(note)
+	var back := Button.new()
+	back.text = "BACK TO MAIN MENU"
+	back.custom_minimum_size = Vector2(0, 48)
+	_style_menu_button(back, Color(0.20, 0.30, 0.34))
+	back.pressed.connect(_show_main_menu)
+	content.add_child(back)
+
+func _build_profile_panel() -> void:
+	profile_panel = _make_secondary_panel("WARFOX  //  PLAYER PROFILE")
+	var content := profile_panel.get_child(0) as VBoxContainer
+	var info := Label.new()
+	info.name = "Profile_Info"
+	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_theme_color_override("font_color", Color(0.84, 0.91, 0.93))
+	content.add_child(info)
+	var back := Button.new()
+	back.text = "BACK TO MAIN MENU"
+	back.custom_minimum_size = Vector2(0, 48)
+	_style_menu_button(back, Color(0.20, 0.30, 0.34))
+	back.pressed.connect(_show_main_menu)
+	content.add_child(back)
+
+func _make_secondary_panel(heading_text: String) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	panel.position = Vector2(-190, -190)
+	panel.size = Vector2(380, 380)
+	panel.custom_minimum_size = Vector2(380, 380)
+	panel.visible = false
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.025, 0.045, 0.06, 0.98)
+	style.border_color = Color(1.0, 0.38, 0.08, 0.95)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(18)
+	style.content_margin_left = 24
+	style.content_margin_right = 24
+	style.content_margin_top = 24
+	style.content_margin_bottom = 24
+	panel.add_theme_stylebox_override("panel", style)
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 18)
+	panel.add_child(content)
+	var heading := Label.new()
+	heading.text = heading_text
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_color_override("font_color", Color(1.0, 0.46, 0.12))
+	heading.add_theme_font_size_override("font_size", 21)
+	content.add_child(heading)
+	root.add_child(panel)
+	return panel
+
+func _show_settings() -> void:
+	menu_panel.visible = false
+	profile_panel.visible = false
+	settings_panel.visible = true
+
+func _show_profile() -> void:
+	menu_panel.visible = false
+	settings_panel.visible = false
+	profile_panel.visible = true
+	var world := get_tree().current_scene
+	if world != null:
+		account_manager = world.get_node_or_null("WARFOX_Account")
+	var info := profile_panel.find_child("Profile_Info", true, false) as Label
+	if info == null:
+		return
+	if account_manager != null:
+		var summary: Dictionary = account_manager.call("get_account_summary")
+		info.text = "PLAYER ID   " + str(summary["player_id"]) + "\n\nMATCHES PLAYED   " + str(summary["matches_played"]) + "\nTOTAL KILLS   " + str(summary["total_kills"]) + "\nUNLOCKED SKINS   " + str(summary["skins_unlocked"]) + "\n\nEQUIPPED SKIN\n" + str(summary["equipped_skin"])
+	else:
+		info.text = "PLAYER PROFILE\nLocal profile is not available yet."
+
+func _show_main_menu() -> void:
+	settings_panel.visible = false
+	profile_panel.visible = false
+	menu_panel.visible = true
+
+func _get_master_volume() -> float:
+	var bus := AudioServer.get_bus_index("Master")
+	if bus < 0:
+		return 100.0
+	return AudioServer.get_bus_volume_linear(bus) * 100.0
+
+func _set_master_volume(value: float) -> void:
+	var bus := AudioServer.get_bus_index("Master")
+	if bus >= 0:
+		AudioServer.set_bus_volume_linear(bus, clampf(value / 100.0, 0.0, 1.0))
