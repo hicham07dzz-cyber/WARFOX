@@ -161,10 +161,14 @@ func _apply_skin_palette(skin_name: String) -> void:
 			part.material_override = armor_mat if part.name == "Torso_Armor" else helmet_mat
 		elif part.name in ["UpperArm", "Thigh"]:
 			part.material_override = fabric_mat
-		elif part.name in ["Forearm_Guard", "Boot_Leg", "Boot", "Belt", "Backpack", "Helmet"]:
+		elif part.name in ["Forearm_Guard", "Boot_Leg", "Boot", "Belt", "Backpack", "Helmet", "Left_Shoulder_Pad", "Right_Shoulder_Pad", "Knee_Guard_Left", "Knee_Guard_Right", "Backpack_Flap", "Helmet_Side_Left", "Helmet_Side_Right"]:
 			part.material_override = helmet_mat
-		elif part.name in ["Chest_Insignia", "Helmet_Visor", "Shoulder_Patch"]:
+		elif part.name in ["Chest_Insignia", "Helmet_Visor", "Shoulder_Patch", "Radio_Antenna", "Helmet_Rear_Ridge"]:
 			part.material_override = accent_mat
+		elif part.name in ["Chest_Pouch_Left", "Chest_Pouch_Right", "Chest_Radio"]:
+			part.material_override = dark
+		elif part.name in ["Belt_Pouch_Left", "Belt_Pouch_Right"]:
+			part.material_override = fabric_mat
 
 func _apply_weapon_palette(weapon_name: String) -> void:
 	var base_color := Color(0.035, 0.045, 0.052)
@@ -225,6 +229,20 @@ func _build_visual() -> void:
 	_add_box(visual_root, "Helmet_Visor", Vector3(0.32, 0.055, 0.025), Vector3(0, 1.91, -0.222), accent)
 	_add_box(visual_root, "Backpack", Vector3(0.48, 0.55, 0.22), Vector3(0, 1.24, 0.27), dark)
 	_add_box(visual_root, "Shoulder_Patch", Vector3(0.16, 0.12, 0.08), Vector3(-0.43, 1.43, 0), accent)
+	_add_box(visual_root, "Left_Shoulder_Pad", Vector3(0.28, 0.19, 0.34), Vector3(-0.43, 1.49, 0.015), armor)
+	_add_box(visual_root, "Right_Shoulder_Pad", Vector3(0.28, 0.19, 0.34), Vector3(0.43, 1.49, 0.015), armor)
+	_add_box(visual_root, "Chest_Pouch_Left", Vector3(0.19, 0.17, 0.12), Vector3(-0.20, 1.08, -0.235), dark)
+	_add_box(visual_root, "Chest_Pouch_Right", Vector3(0.19, 0.17, 0.12), Vector3(0.20, 1.08, -0.235), dark)
+	_add_box(visual_root, "Chest_Radio", Vector3(0.12, 0.22, 0.09), Vector3(0.29, 1.43, 0.20), dark)
+	_add_box(visual_root, "Radio_Antenna", Vector3(0.025, 0.20, 0.025), Vector3(0.31, 1.61, 0.20), accent)
+	_add_box(visual_root, "Belt_Pouch_Left", Vector3(0.17, 0.20, 0.17), Vector3(-0.29, 0.84, -0.015), fabric)
+	_add_box(visual_root, "Belt_Pouch_Right", Vector3(0.17, 0.20, 0.17), Vector3(0.29, 0.84, -0.015), fabric)
+	_add_box(visual_root, "Knee_Guard_Left", Vector3(0.25, 0.20, 0.12), Vector3(-0.19, 0.39, -0.145), armor)
+	_add_box(visual_root, "Knee_Guard_Right", Vector3(0.25, 0.20, 0.12), Vector3(0.19, 0.39, -0.145), armor)
+	_add_box(visual_root, "Backpack_Flap", Vector3(0.36, 0.18, 0.045), Vector3(0, 1.48, 0.39), armor)
+	_add_box(visual_root, "Helmet_Side_Left", Vector3(0.10, 0.16, 0.20), Vector3(-0.25, 1.91, 0.015), armor)
+	_add_box(visual_root, "Helmet_Side_Right", Vector3(0.10, 0.16, 0.20), Vector3(0.25, 1.91, 0.015), armor)
+	_add_box(visual_root, "Helmet_Rear_Ridge", Vector3(0.32, 0.07, 0.10), Vector3(0, 2.075, 0.12), accent)
 
 	left_arm_pivot = Node3D.new()
 	left_arm_pivot.name = "LeftArm_Animated"
