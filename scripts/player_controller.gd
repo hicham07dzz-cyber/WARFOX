@@ -25,6 +25,8 @@ var right_arm_pivot: Node3D
 var left_leg_pivot: Node3D
 var right_leg_pivot: Node3D
 var animation_clock := 0.0
+var fire_animation_time := 0.0
+var damage_animation_time := 0.0
 var healing := false
 var medkits := 3
 var heal_time := 0.0
@@ -204,6 +206,7 @@ func receive_damage(amount: int) -> void:
 	if is_knocked_out or amount <= 0:
 		return
 	health = maxi(0, health - amount)
+	damage_animation_time = 0.22
 	if health == 0:
 		is_knocked_out = true
 		healing = false
@@ -256,6 +259,12 @@ func _process(delta: float) -> void:
 func _update_character_animation(delta: float) -> void:
 	if visual_root == null:
 		return
+	fire_animation_time = maxf(0.0, fire_animation_time - delta)
+	damage_animation_time = maxf(0.0, damage_animation_time - delta)
+	if is_knocked_out:
+		visual_root.rotation.x = lerp(visual_root.rotation.x, -1.0, delta * 5.0)
+		return
+	visual_root.rotation.x = move_toward(visual_root.rotation.x, 0.0, delta * 5.0)
 	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
 	var moving := horizontal_speed > 0.35 and is_on_floor() and not healing
 	var crouch_blend := 1.0 if crouching or Input.is_action_pressed("crouch") else 0.0
@@ -272,6 +281,11 @@ func _update_character_animation(delta: float) -> void:
 		right_arm_pivot.rotation.x = -0.75
 		left_leg_pivot.rotation.x = 0.25
 		right_leg_pivot.rotation.x = -0.25
+	if fire_animation_time > 0.0:
+		right_arm_pivot.rotation.x -= 0.65 * (fire_animation_time / 0.14)
+	if damage_animation_time > 0.0:
+		left_arm_pivot.rotation.x -= 0.35 * (damage_animation_time / 0.22)
+		right_arm_pivot.rotation.x -= 0.35 * (damage_animation_time / 0.22)
 	if healing:
 		left_arm_pivot.rotation.x = -0.9
 		right_arm_pivot.rotation.x = -1.25 + sin(animation_clock * 7.0) * 0.08
@@ -344,6 +358,7 @@ func _fire_arcade_ray() -> void:
 	if fire_cooldown > 0.0:
 		return
 	fire_cooldown = FIRE_INTERVAL
+	fire_animation_time = 0.14
 	var camera := get_viewport().get_camera_3d()
 	if camera == null:
 		return
