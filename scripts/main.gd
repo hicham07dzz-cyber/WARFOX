@@ -274,9 +274,37 @@ func _build_nature_dressing() -> void:
 		_add_palm_tree(-150.0 + cos(angle) * 62.0, 350.0 + sin(angle) * 48.0,
 			1.05 + float(i % 2) * 0.12, trunk_mat, leaf_mat)
 
+func _spawn_glb_environment_model(path: String, node_name: String, world_position: Vector3, model_scale: Vector3) -> bool:
+	if not ResourceLoader.exists(path):
+		return false
+	var packed := load(path) as PackedScene
+	if packed == null:
+		push_warning("WARFOX: Could not load environment model: " + path)
+		return false
+	var instance := packed.instantiate() as Node3D
+	if instance == null:
+		push_warning("WARFOX: Environment model root is not Node3D: " + path)
+		return false
+	instance.name = node_name
+	instance.position = world_position
+	instance.scale = model_scale
+	add_child(instance)
+	return true
+
 func _add_pine_tree(x: float, z: float, tree_scale: float, trunk_mat: Material, leaf_mat: Material) -> void:
+	var variants := [
+		"res://assets/environment/nature/tree-pinetalla-detailed.glb",
+		"res://assets/environment/nature/tree-pinetallb-detailed.glb",
+		"res://assets/environment/nature/tree-oak.glb"
+	]
+	var variant_index := posmod(int(absf(x * 3.0 + z)), variants.size())
+	if _spawn_glb_environment_model(variants[variant_index], "Pinecrest_Imported_Tree",
+		Vector3(x, _height_at(x, z), z), Vector3.ONE * tree_scale * 4.5):
+		return
+
+	# Safe fallback while the licensed GLB pack is downloading.
 	var tree := Node3D.new()
-	tree.name = "Pinecrest_Pine"
+	tree.name = "Pinecrest_Pine_Fallback"
 	tree.position = Vector3(x, _height_at(x, z), z)
 	tree.scale = Vector3.ONE * tree_scale
 	add_child(tree)
@@ -300,8 +328,11 @@ func _add_pine_tree(x: float, z: float, tree_scale: float, trunk_mat: Material, 
 		tree.add_child(crown)
 
 func _add_palm_tree(x: float, z: float, tree_scale: float, trunk_mat: Material, leaf_mat: Material) -> void:
+	if _spawn_glb_environment_model("res://assets/environment/nature/tree-palmdetailedtall.glb",
+		"Coastal_Imported_Palm", Vector3(x, _height_at(x, z), z), Vector3.ONE * tree_scale * 4.5):
+		return
 	var tree := Node3D.new()
-	tree.name = "Coastal_Palm"
+	tree.name = "Coastal_Palm_Fallback"
 	tree.position = Vector3(x, _height_at(x, z), z)
 	tree.scale = Vector3.ONE * tree_scale
 	add_child(tree)
@@ -327,8 +358,19 @@ func _add_palm_tree(x: float, z: float, tree_scale: float, trunk_mat: Material, 
 		tree.add_child(leaf)
 
 func _add_rock(x: float, z: float, rock_scale: float, rock_mat: Material) -> void:
+	var variants := [
+		"res://assets/environment/nature/rock-largea.glb",
+		"res://assets/environment/nature/rock-largeb.glb",
+		"res://assets/environment/nature/rock-largec.glb",
+		"res://assets/environment/nature/rock-larged.glb"
+	]
+	var variant_index := posmod(int(absf(x * 2.0 + z * 5.0)), variants.size())
+	if _spawn_glb_environment_model(variants[variant_index], "Imported_Terrain_Rock",
+		Vector3(x, _height_at(x, z) + rock_scale * 0.2, z),
+		Vector3.ONE * rock_scale * 1.5):
+		return
 	var rock := MeshInstance3D.new()
-	rock.name = "Terrain_Boulder"
+	rock.name = "Terrain_Boulder_Fallback"
 	var rock_mesh := SphereMesh.new()
 	rock_mesh.radius = 1.0
 	rock_mesh.height = 1.7
