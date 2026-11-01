@@ -188,7 +188,7 @@ func _spawn_player(_terrain: MeshInstance3D) -> void:
 	var player := CharacterBody3D.new()
 	player.name = "WARFOX_Player"
 	player.set_script(player_script)
-	player.position = Vector3(-105, 174, 0)
+	player.position = Vector3(-35, 174, 0)
 	add_child(player)
 	player.velocity = Vector3(0, -15, 0)
 	match_player = player
@@ -225,6 +225,7 @@ func _build_transport_plane() -> void:
 	transport_plane = Node3D.new()
 	transport_plane.name = "WARFOX_Transport_Aircraft"
 	transport_plane.position = Vector3(-145, 183, 0)
+	transport_plane.rotation.y = -PI * 0.5
 	add_child(transport_plane)
 	var hull_mat := StandardMaterial3D.new()
 	hull_mat.albedo_color = Color(0.16, 0.20, 0.20)
