@@ -16,6 +16,7 @@ var flight_hint: Label
 var health_bar: ProgressBar
 var health_text: Label
 var medkit_button: Button
+var zone_status_label: Label
 
 func _ready() -> void:
 	_build_hud()
@@ -135,6 +136,14 @@ func _build_hud() -> void:
 	flight_hint.add_theme_font_size_override("font_size", 15)
 	flight_hint.visible = false
 	root.add_child(flight_hint)
+
+	zone_status_label = Label.new()
+	zone_status_label.text = "SAFE ZONE  •  PREPARING"
+	zone_status_label.position = Vector2(25, 72)
+	zone_status_label.size = Vector2(290, 24)
+	zone_status_label.add_theme_color_override("font_color", Color(0.35, 0.82, 1.0))
+	zone_status_label.add_theme_font_size_override("font_size", 14)
+	root.add_child(zone_status_label)
 
 	var mode := Label.new()
 	mode.text = "ISLAND TEST  •  THIRD PERSON"
@@ -261,6 +270,22 @@ func _process(_delta: float) -> void:
 		if medkit_button != null:
 			medkit_button.text = "MEDKIT x" + str(player.medkits)
 			medkit_button.disabled = player.medkits <= 0 or player.health >= 100 or player.healing
+		if zone_status_label != null:
+			var world := player.get_parent()
+			if world != null:
+				var elapsed := float(world.get("safe_zone_elapsed"))
+				var radius := float(world.get("safe_zone_radius"))
+				var remaining := maxi(0, int(30.0 - elapsed)) if elapsed < 30.0 else 0
+				var distance := Vector2(player.global_position.x, player.global_position.z).length()
+				if distance > radius:
+					zone_status_label.text = "⚠ OUTSIDE SAFE ZONE  •  " + str(int(distance - radius)) + "m"
+					zone_status_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.16))
+				elif remaining > 0:
+					zone_status_label.text = "SAFE ZONE SHRINKS IN  " + str(remaining) + "s"
+					zone_status_label.add_theme_color_override("font_color", Color(0.35, 0.82, 1.0))
+				else:
+					zone_status_label.text = "SAFE ZONE  •  " + str(int(radius)) + "m"
+					zone_status_label.add_theme_color_override("font_color", Color(0.35, 0.82, 1.0))
 	jump_pulse = false
 	fire_pulse = false
 	heal_pulse = false
