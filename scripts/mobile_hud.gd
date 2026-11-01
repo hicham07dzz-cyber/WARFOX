@@ -6,6 +6,7 @@ var joystick_vector := Vector2.ZERO
 var sprint_active := false
 var crouch_active := false
 var jump_pulse := false
+var fire_pulse := false
 
 func _ready() -> void:
 	_build_hud()
@@ -53,6 +54,14 @@ func _build_hud() -> void:
 	mode.add_theme_font_size_override("font_size", 13)
 	root.add_child(mode)
 
+	var crosshair := Label.new()
+	crosshair.text = "+"
+	crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	crosshair.position = Vector2(-8, -18)
+	crosshair.add_theme_color_override("font_color", Color(1.0, 0.9, 0.72, 0.95))
+	crosshair.add_theme_font_size_override("font_size", 30)
+	root.add_child(crosshair)
+
 	var jump := Button.new()
 	jump.text = "JUMP"
 	jump.size = Vector2(100, 68)
@@ -65,6 +74,19 @@ func _build_hud() -> void:
 	_style_button(jump, Color(0.10, 0.27, 0.34))
 	jump.pressed.connect(func(): jump_pulse = true)
 	root.add_child(jump)
+
+	var fire := Button.new()
+	fire.text = "FIRE"
+	fire.size = Vector2(104, 68)
+	fire.anchor_left = 1.0
+	fire.anchor_top = 1.0
+	fire.anchor_right = 1.0
+	fire.anchor_bottom = 1.0
+	fire.position = Vector2(-126, -190)
+	fire.add_theme_font_size_override("font_size", 18)
+	_style_button(fire, Color(0.65, 0.16, 0.08))
+	fire.button_down.connect(func(): fire_pulse = true)
+	root.add_child(fire)
 
 	var sprint := Button.new()
 	sprint.text = "RUN"
@@ -101,8 +123,9 @@ func _build_hud() -> void:
 
 func _process(_delta: float) -> void:
 	if player != null:
-		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active)
+		player.set_mobile_input(joystick_vector, sprint_active, jump_pulse, crouch_active, fire_pulse)
 	jump_pulse = false
+	fire_pulse = false
 
 class TouchStick extends Control:
 	signal stick_changed(value: Vector2)
