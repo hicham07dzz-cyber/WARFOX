@@ -28,6 +28,8 @@ var weapon_index := 0
 var pause_panel: PanelContainer
 var pause_button: Button
 var hud_edit_button: Button
+var hud_save_button: Button
+var hud_reset_button: Button
 var hud_edit_hint: Label
 var hud_edit_mode := false
 var hud_layout := ConfigFile.new()
@@ -689,25 +691,25 @@ func _build_hud_editor(root: Control) -> void:
 	hud_edit_hint.visible = false
 	root.add_child(hud_edit_hint)
 
-	var save_button := Button.new()
-	save_button.text = "SAVE HUD"
-	save_button.position = Vector2(148, 176)
-	save_button.size = Vector2(104, 40)
+	hud_save_button = Button.new()
+	hud_save_button.text = "SAVE HUD"
+	hud_save_button.position = Vector2(148, 176)
+	hud_save_button.size = Vector2(104, 40)
 	_style_button(save_button, Color(0.12, 0.36, 0.25))
-	save_button.visible = false
-	save_button.name = "HUD_Save_Layout"
-	save_button.pressed.connect(_save_hud_layout)
-	root.add_child(save_button)
+	hud_save_button.visible = false
+	hud_save_button.name = "HUD_Save_Layout"
+	hud_save_button.pressed.connect(_save_hud_layout)
+	root.add_child(hud_save_button)
 
-	var reset_button := Button.new()
-	reset_button.text = "RESET"
-	reset_button.position = Vector2(260, 176)
-	reset_button.size = Vector2(82, 40)
+	hud_reset_button = Button.new()
+	hud_reset_button.text = "RESET"
+	hud_reset_button.position = Vector2(260, 176)
+	hud_reset_button.size = Vector2(82, 40)
 	_style_button(reset_button, Color(0.35, 0.16, 0.10))
-	reset_button.visible = false
-	reset_button.name = "HUD_Reset_Layout"
-	reset_button.pressed.connect(_reset_hud_layout)
-	root.add_child(reset_button)
+	hud_reset_button.visible = false
+	hud_reset_button.name = "HUD_Reset_Layout"
+	hud_reset_button.pressed.connect(_reset_hud_layout)
+	root.add_child(hud_reset_button)
 
 	# Register all touch controls so their positions can be adjusted independently.
 	for node in root.get_children():
@@ -760,9 +762,9 @@ func _toggle_hud_edit() -> void:
 	var save_button := get_node_or_null("Control/HUD_Save_Layout")
 	var reset_button := get_node_or_null("Control/HUD_Reset_Layout")
 	if save_button != null:
-		save_button.visible = hud_edit_mode
+		hud_save_button.visible = hud_edit_mode
 	if reset_button != null:
-		reset_button.visible = hud_edit_mode
+		hud_reset_button.visible = hud_edit_mode
 	hud_edit_button.text = "DONE" if hud_edit_mode else "HUD"
 	if not hud_edit_mode:
 		_save_hud_layout()
@@ -771,7 +773,7 @@ func _save_hud_layout() -> void:
 	for index in range(hud_movable_controls.size()):
 		var control := hud_movable_controls[index]
 		if is_instance_valid(control):
-			hud_layout.set_value("controls", str(control.get_instance_id()), {
+			hud_layout.set_value("controls", control.name, {
 				"position": control.position,
 				"anchor_left": control.anchor_left,
 				"anchor_top": control.anchor_top,
@@ -789,9 +791,9 @@ func _save_hud_layout() -> void:
 			var save_button := node.find_child("HUD_Save_Layout", true, false)
 			var reset_button := node.find_child("HUD_Reset_Layout", true, false)
 			if save_button != null:
-				save_button.visible = false
+				hud_save_button.visible = false
 			if reset_button != null:
-				reset_button.visible = false
+				hud_reset_button.visible = false
 
 func _load_hud_layout() -> void:
 	var error := hud_layout.load("user://warfox_hud_layout.cfg")
