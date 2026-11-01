@@ -15,6 +15,9 @@ The current prototype includes:
 - Three training targets with health values, hit feedback, and automatic respawn.
 - Two simple arcade training bots that approach the player, respect physical collision, and deal limited contact damage when they have a clear line of sight.
 - Player health display, damage handling, and automatic respawn after health reaches zero.
+- Procedural character animation states for idle breathing, walking, running, crouching, jumping/falling, firing recoil, damage flinch, healing, parachute descent, and knockout.
+- Three-use medkit action with a timed healing animation and a visible remaining-use counter.
+- Deployable parachute visual and slowed descent while airborne.
 - Mobile joystick and touch buttons for movement, sprint, jump, crouch, and firing.
 - Right-side touch-drag camera aiming, with movement direction relative to the camera.
 - Desktop right-mouse camera look support.
@@ -43,10 +46,11 @@ This is an early playable foundation, not a finished Battle Royale game. The cha
 1. Test player movement, camera aiming, terrain collision, and building collision on Android.
 2. Fix any clipping, collision, camera, or touch-control bugs found during testing.
 3. Expand the weapon sandbox with weapon selection, reload, and polished hit feedback.
-4. Replace the prototype bot models with animated characters and improve their navigation and combat behaviours.
-5. Add loot, inventory, health, match flow, and shrinking safe zone.
-6. Add lobby, cosmetics, rewards, and store interfaces.
-7. Develop online services and multiplayer infrastructure after offline gameplay is stable.
-8. Develop the separate WARFOX ADMIN application.
+4. Replace procedural character motion and prototype models with authored skeletal rigs, motion-captured-quality animation sets, and full animation blending.
+5. Add a proper plane insertion sequence, parachute steering, landing roll, and full battle royale match start.
+6. Add loot, inventory, health, match flow, and shrinking safe zone.
+7. Add lobby, cosmetics, rewards, and store interfaces.
+8. Develop online services and multiplayer infrastructure after offline gameplay is stable.
+9. Develop the separate WARFOX ADMIN application.
 
 A reliable 50-player online mode requires dedicated server infrastructure and extensive network and security testing.
