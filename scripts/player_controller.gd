@@ -155,6 +155,7 @@ func _apply_skin_palette(skin_name: String) -> void:
 	var fabric_mat := _material(fabric_color, 0.05, 0.78)
 	var accent_mat := _material(accent_color, 0.24, 0.4)
 	var helmet_mat := _material(helmet_color, 0.28, 0.42)
+	var dark_mat := _material(Color(0.035, 0.045, 0.052), 0.28, 0.58)
 	for node in visual_root.find_children("*", "MeshInstance3D", true, false):
 		var part := node as MeshInstance3D
 		if part.name in ["Torso_Armor", "Chest_Plate"]:
