@@ -264,7 +264,7 @@ class MainActivity : Activity() {
         val battery = try {
             (getSystemService(BATTERY_SERVICE) as BatteryManager).getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         } catch (_: Exception) { -1 }
-        screenDescription.text = "استهلاك ذاكرة التطبيق التقريبي: ${usedMb}MB من ${maxMb}MB\\nذاكرة العملية PSS: ${pssMb}MB\\nالبطارية: ${if (battery >= 0) "$battery%" else "غير متاحة"}\\nهذه قراءة لحظية وليست اختبار استهلاك طويل المدى."
+        screenDescription.text = "استهلاك ذاكرة التطبيق التقريبي: ${usedMb}MB من ${maxMb}MB\nذاكرة العملية PSS: ${pssMb}MB\nالبطارية: ${if (battery >= 0) "$battery%" else "غير متاحة"}\nهذه قراءة لحظية وليست اختبار استهلاك طويل المدى."
         status.text = "اكتمل فحص الموارد اللحظي."
     }
     private fun loadPatchProposal() {
