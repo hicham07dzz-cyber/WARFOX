@@ -49,7 +49,7 @@ class GoogleAccountActivity : Activity() {
         clientId = EditText(this).apply {
             hint = "OAuth Web Client ID"
             setText(prefs.getString("web_client_id", "") ?: "")
-            setTextColor(Color.WHITE); setHintTextColor(Color.GRAY); singleLine = true
+            setTextColor(Color.WHITE); setHintTextColor(Color.GRAY); setSingleLine(true)
             setPadding(dp(12), dp(8), dp(12), dp(8)); setBackgroundColor(Color.rgb(31, 41, 56))
         }
         root.addView(clientId, LinearLayout.LayoutParams(-1, dp(52)))
