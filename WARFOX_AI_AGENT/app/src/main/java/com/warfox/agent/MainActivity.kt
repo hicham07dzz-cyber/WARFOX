@@ -88,6 +88,12 @@ class MainActivity : Activity() {
             setPadding(dp(20), dp(22), dp(20), dp(18))
             setBackgroundColor(Color.rgb(15, 20, 29))
         }
+        val logo = ImageView(this).apply {
+            setImageResource(R.drawable.warfox_logo)
+            contentDescription = "شعار WARFOX AI AGENT"
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+        root.addView(logo, LinearLayout.LayoutParams(dp(104), dp(104)).apply { gravity = Gravity.CENTER_HORIZONTAL; bottomMargin = dp(8) })
         val heading = TextView(this).apply {
             text = "WARFOX AI AGENT"
             textSize = 25f
