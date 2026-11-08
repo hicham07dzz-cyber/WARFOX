@@ -27,6 +27,7 @@ import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import java.util.concurrent.Executors
+import org.json.JSONObject
 
 class MainActivity : Activity() {
     private lateinit var status: TextView
@@ -121,6 +122,7 @@ class MainActivity : Activity() {
         root.addView(heading)
         root.addView(subtitle)
         root.addView(prompt, LinearLayout.LayoutParams(-1, dp(132)))
+        root.addView(actionButton("إعدادات الذكاء الاصطناعي  ⚙", Color.rgb(65, 91, 125)) { startActivity(Intent(this, AiProviderSettingsActivity::class.java)) })
         root.addView(actionButton("إرسال  ➤", Color.rgb(255, 132, 35)) { submitTask() })
         root.addView(actionButton("استكمال آخر مهمة محفوظة", Color.rgb(65, 91, 125)) { resumeLastTask() })
         root.addView(actionButton("عرض سجل المحادثة المحفوظ", Color.rgb(49, 65, 86)) { screenDescription.text = taskMemory.historyText() })
@@ -239,7 +241,23 @@ class MainActivity : Activity() {
         if (message.isEmpty()) { status.text = "اكتب وصف المهمة أولاً."; return }
         if (message.length > 3000) { status.text = "الحد الأقصى للوصف 3000 حرف."; return }
         taskMemory.saveDraft(message)
-        status.text = "جارٍ إرسال المهمة..."
+        if (AiProviderStore.isConfigured(this)) {
+            status.text = "جارٍ إرسال طلب إلى نموذج الذكاء الاصطناعي المحفوظ..."
+            executor.execute {
+                try {
+                    val answer = AiProviderClient(this).complete(message)
+                    taskMemory.saveConversation(message, answer)
+                    runOnUiThread {
+                        screenDescription.text = answer
+                        status.text = "وصل رد النموذج بنجاح. تنفيذ اللمس والتحكم ما زال يحتاج ربطاً بمحرك الوكيل."
+                    }
+                } catch (error: Exception) {
+                    runOnUiThread { status.text = "فشل طلب الذكاء الاصطناعي: " + error.message }
+                }
+            }
+            return
+        }
+        status.text = "لا يوجد مزود API محفوظ؛ سأستخدم محرك Termux المحلي..."
         executor.execute {
             try {
                 val api = TaskApi()
