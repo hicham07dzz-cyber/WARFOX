@@ -423,11 +423,6 @@ class MainActivity : Activity() {
         status.text = "زر الإيقاف العائم نشط."
     }
 
-    override fun onDestroy() {
-        pollHandler.removeCallbacksAndMessages(null)
-        super.onDestroy()
-    }
-
     override fun onResume() {
         super.onResume()
         if (overlayPermissionPending) {
@@ -493,6 +488,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        pollHandler.removeCallbacksAndMessages(null)
         if (captureReceiverRegistered) unregisterReceiver(captureReceiver)
         executor.shutdownNow()
         super.onDestroy()
