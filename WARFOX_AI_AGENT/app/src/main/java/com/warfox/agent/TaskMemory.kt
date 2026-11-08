@@ -21,6 +21,13 @@ class TaskMemory(context: Context) {
     }
 
     @Synchronized
+    fun saveConversation(prompt: String, answer: String) {
+        appendHistory("user", prompt, "sent_to_ai", "")
+        appendHistory("assistant", answer, "answered", "")
+        prefs.edit().putString("last_ai_reply", answer).putLong("updated_at", System.currentTimeMillis()).apply()
+    }
+
+    @Synchronized
     fun saveDraft(prompt: String) {
         prefs.edit()
             .putString("prompt", prompt)
