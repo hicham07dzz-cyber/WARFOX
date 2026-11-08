@@ -74,6 +74,10 @@ class MainActivity : Activity() {
             val statusIntent = Intent(this, AgentStatusService::class.java)
             if (Build.VERSION.SDK_INT >= 26) startForegroundService(statusIntent) else startService(statusIntent)
         } catch (_: Exception) { }
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 903)
+        }
         window.statusBarColor = Color.rgb(15, 20, 29)
         window.navigationBarColor = Color.rgb(15, 20, 29)
         window.decorView.systemUiVisibility = 0
