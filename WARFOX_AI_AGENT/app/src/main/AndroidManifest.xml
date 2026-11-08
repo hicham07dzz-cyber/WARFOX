@@ -1,4 +1,8 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <queries>\n        <package android:name="org.godotengine.editor.v4" />\n        <package android:name="org.godotengine.editor" />\n        <package android:name="org.godotengine.editor.v3" />\n    </queries>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <queries>\n        <package android:name="org.godotengine.editor.v4" />\n        <package android:name="org.godotengine.editor" />\n        <package android:name="org.godotengine.editor.v3" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>\n    </queries>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
