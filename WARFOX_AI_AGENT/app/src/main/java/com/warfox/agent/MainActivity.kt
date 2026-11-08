@@ -14,6 +14,8 @@ import android.os.Bundle
 import android.os.Build
 import android.os.BatteryManager
 import android.os.Debug
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
@@ -65,6 +67,7 @@ class MainActivity : Activity() {
     }
     private val captureRequest = 4102
     private val executor = Executors.newSingleThreadExecutor()
+    private val pollHandler = Handler(Looper.getMainLooper())
     private var overlayPermissionPending = false
     private var accessibilitySettingsOpened = false
 
@@ -276,7 +279,8 @@ class MainActivity : Activity() {
                 val started = api.startWorker(taskId)
                 taskMemory.save(taskId, message, started.optString("status", "started"))
                 runOnUiThread {
-                    status.text = "تم إرسال المهمة بنجاح.\nرقم المهمة: $taskId\nحالة التشغيل: ${started.optString("status", "تم الإرسال")}"
+                    status.text = "تم إرسال المهمة. جارٍ متابعة حالتها ونتائجها تلقائياً..."
+                    pollTask(taskId, message, 0)
                 }
             } catch (error: Exception) {
                 runOnUiThread { status.text = "تعذر الاتصال بمحرك WARFOX: ${error.message}\nتأكد أن خادم Termux يعمل على الهاتف." }
@@ -285,6 +289,31 @@ class MainActivity : Activity() {
     }
 
 
+    private fun pollTask(taskId: String, taskPrompt: String, attempt: Int) {
+        if (isFinishing || attempt >= 120) return
+        executor.execute {
+            try {
+                val result = TaskApi().getTask(taskId)
+                val state = result.optString("status", "running")
+                val readable = result.toString(2).take(12000)
+                taskMemory.save(taskId, taskPrompt, state, readable)
+                runOnUiThread {
+                    if (currentTaskId != taskId || isFinishing) return@runOnUiThread
+                    screenDescription.text = readable
+                    status.text = "المهمة " + taskId + " — الحالة: " + state
+                    val terminal = state.lowercase() in listOf("completed", "complete", "done", "failed", "error", "cancelled", "canceled")
+                    if (!terminal) pollHandler.postDelayed({ pollTask(taskId, taskPrompt, attempt + 1) }, 3000)
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    if (currentTaskId == taskId && !isFinishing) {
+                        status.text = "انقطع الاتصال أثناء متابعة المهمة؛ سأعيد المحاولة. " + error.message
+                        pollHandler.postDelayed({ pollTask(taskId, taskPrompt, attempt + 1) }, 5000)
+                    }
+                }
+            }
+        }
+    }
     private fun showDiagnostics() {
         val runtime = Runtime.getRuntime()
         val usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
@@ -389,6 +418,11 @@ class MainActivity : Activity() {
     private fun startOverlay() {
         startService(Intent(this, StopOverlayService::class.java))
         status.text = "زر الإيقاف العائم نشط."
+    }
+
+    override fun onDestroy() {
+        pollHandler.removeCallbacksAndMessages(null)
+        super.onDestroy()
     }
 
     override fun onResume() {
