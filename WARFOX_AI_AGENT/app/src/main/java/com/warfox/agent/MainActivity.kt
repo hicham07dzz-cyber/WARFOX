@@ -99,7 +99,7 @@ class MainActivity : Activity() {
             status.text = "تم إيقاف التحكم ومشاركة الشاشة والزر العائم."
         })
         root.addView(sectionLabel("التطبيقات"))
-        root.addView(actionButton("فتح Godot Editor", Color.rgb(49, 65, 86)) { openGodot() })
+        root.addView(actionButton("فتح Godot Engine 4", Color.rgb(49, 65, 86)) { openGodot() })
 
         val scroll = ScrollView(this).apply { addView(root) }
         setContentView(scroll)
@@ -179,15 +179,30 @@ class MainActivity : Activity() {
     }
 
     private fun openGodot() {
-        val candidates = listOf("org.godotengine.editor.v4", "org.godotengine.editor")
-        val launch = candidates.firstNotNullOfOrNull { packageName ->
+        val candidates = listOf(
+            "org.godotengine.editor.v4",
+            "org.godotengine.editor",
+            "org.godotengine.editor.v3"
+        )
+        var launch = candidates.firstNotNullOfOrNull { packageName ->
             packageManager.getLaunchIntentForPackage(packageName)
         }
+
+        // Fallback: discover launcher apps whose visible name contains "Godot".
         if (launch == null) {
-            status.text = "لم أجد Godot Editor مثبتاً. ثبّت Godot Editor أولاً."
+            val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            val godotApp = packageManager.queryIntentActivities(launcherIntent, 0)
+                .firstOrNull { it.loadLabel(packageManager).toString().contains("Godot", ignoreCase = true) }
+            if (godotApp != null) {
+                launch = packageManager.getLaunchIntentForPackage(godotApp.activityInfo.packageName)
+            }
+        }
+
+        if (launch == null) {
+            status.text = "لم أتمكن من العثور على Godot Engine 4. تأكد أنه مثبت على الهاتف."
             return
         }
-        status.text = "فتح Godot. يمكنك الرجوع إلى WARFOX من التطبيقات الأخيرة."
+        status.text = "جارٍ فتح Godot Engine 4. يمكنك الرجوع إلى WARFOX من التطبيقات الأخيرة."
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(launch)
     }
