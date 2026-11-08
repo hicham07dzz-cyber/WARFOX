@@ -110,6 +110,7 @@ class MainActivity : Activity() {
         root.addView(prompt, LinearLayout.LayoutParams(-1, dp(132)))
         root.addView(actionButton("إرسال  ➤", Color.rgb(255, 132, 35)) { submitTask() })
         root.addView(actionButton("استكمال آخر مهمة محفوظة", Color.rgb(65, 91, 125)) { resumeLastTask() })
+        root.addView(actionButton("عرض سجل المحادثة المحفوظ", Color.rgb(49, 65, 86)) { screenDescription.text = taskMemory.historyText() })
         root.addView(status)
         screenPreview = ImageView(this).apply {
             visibility = View.GONE
@@ -238,6 +239,7 @@ class MainActivity : Activity() {
             try {
                 val result = TaskApi().getTask(taskId)
                 val readable = result.toString(2).take(5000)
+                taskMemory.save(taskId, savedPrompt, result.optString("status", "retrieved"), readable)
                 runOnUiThread {
                     prompt.setText(savedPrompt)
                     screenDescription.text = readable
