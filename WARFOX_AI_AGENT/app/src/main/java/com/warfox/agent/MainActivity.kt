@@ -28,6 +28,7 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var prompt: EditText
     private lateinit var screenPreview: ImageView
+    private lateinit var screenDescription: TextView
     private var captureReceiverRegistered = false
     private val captureReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -111,7 +112,25 @@ class MainActivity : Activity() {
             contentDescription = "آخر صورة شاشة التقطها WARFOX بموافقة المستخدم"
         }
         root.addView(screenPreview, LinearLayout.LayoutParams(-1, dp(220)))
+        screenDescription = TextView(this).apply {
+            text = "محتوى الشاشة المقروء سيظهر هنا بعد تفعيل إمكانية الوصول."
+            textSize = 13f
+            setTextColor(Color.rgb(210, 218, 230))
+            setPadding(dp(10), dp(10), dp(10), dp(10))
+            setBackgroundColor(Color.rgb(28, 36, 48))
+        }
+        root.addView(screenDescription, LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT))
         root.addView(sectionLabel("التحكم والصلاحيات"))
+        root.addView(actionButton("قراءة محتوى الشاشة الحالية", Color.rgb(49, 65, 86)) {
+            val accessibility = AgentRuntime.accessibilityService
+            if (accessibility == null) {
+                status.text = "فعّل خدمة إمكانية الوصول أولاً حتى أقرأ أسماء الأزرار والنصوص الظاهرة."
+            } else {
+                val description = accessibility.describeCurrentScreen()
+                screenDescription.text = description
+                status.text = "تمت قراءة عناصر الشاشة محلياً. لم يتم النقر أو إرسال المحتوى."
+            }
+        })
         root.addView(actionButton("تفعيل خدمة إمكانية الوصول", Color.rgb(49, 65, 86)) {
             accessibilitySettingsOpened = true
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
