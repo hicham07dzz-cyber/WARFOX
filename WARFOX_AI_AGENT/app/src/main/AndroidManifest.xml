@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
+        android:icon="@drawable/warfox_logo"
         android:allowBackup="false"
         android:label="WARFOX AI AGENT"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
