@@ -7,7 +7,7 @@ import java.net.URL
 
 class AiProviderClient(private val context: Context) {
     fun complete(prompt: String): String {
-        val endpoint = AiProviderStore.endpoint(context).trimEnd("/")
+        val endpoint = AiProviderStore.endpoint(context).trimEnd('/')
         val model = AiProviderStore.model(context)
         val key = AiProviderStore.apiKey(context)
         require(endpoint.startsWith("https://") && key.isNotBlank() && model.isNotBlank()) { "أكمل إعدادات مزود الذكاء الاصطناعي." }
