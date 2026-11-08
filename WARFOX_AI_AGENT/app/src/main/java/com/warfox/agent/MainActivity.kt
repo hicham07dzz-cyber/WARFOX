@@ -128,6 +128,7 @@ class MainActivity : Activity() {
         root.addView(heading)
         root.addView(subtitle)
         root.addView(prompt, LinearLayout.LayoutParams(-1, dp(132)))
+        root.addView(actionButton("حساب Google  ●", Color.rgb(65, 91, 125)) { startActivity(Intent(this, GoogleAccountActivity::class.java)) })
         root.addView(actionButton("إعدادات الذكاء الاصطناعي  ⚙", Color.rgb(65, 91, 125)) { startActivity(Intent(this, AiProviderSettingsActivity::class.java)) })
         root.addView(actionButton("إرسال  ➤", Color.rgb(255, 132, 35)) { submitTask() })
         root.addView(actionButton("استكمال آخر مهمة محفوظة", Color.rgb(65, 91, 125)) { resumeLastTask() })
