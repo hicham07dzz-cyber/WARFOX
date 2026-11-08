@@ -67,6 +67,9 @@ class ScreenCaptureService : Service() {
 
         workerThread = HandlerThread("WarfoxScreenCapture").also { it.start() }
         workerHandler = Handler(workerThread!!.looper)
+        projection?.registerCallback(object : MediaProjection.Callback() {
+            override fun onStop() { stopSelf() }
+        }, workerHandler)
         imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
 
         imageReader!!.setOnImageAvailableListener({ reader ->
