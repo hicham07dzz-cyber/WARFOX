@@ -11,6 +11,10 @@ on:
       - '.github/workflows/warfox-ai-agent.yml'
   workflow_dispatch:
 
+concurrency:
+  group: warfox-ai-agent-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,6 +27,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+          cache-read-only: false
       - name: Build debug APK
         working-directory: WARFOX_AI_AGENT
         run: gradle assembleDebug
