@@ -46,6 +46,7 @@ class MainActivity : Activity() {
         root.addView(actionButton("السماح بزر الإيقاف العائم") { requestOverlayPermission() })
         root.addView(actionButton("بدء مشاركة الشاشة") { requestScreenCapture() })
         root.addView(actionButton("إيقاف الوكيل") {
+            AgentRuntime.stop()
             stopService(Intent(this, ScreenCaptureService::class.java))
             stopService(Intent(this, StopOverlayService::class.java))
             status.text = "تم إرسال طلب الإيقاف."
