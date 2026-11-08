@@ -3,6 +3,7 @@ package com.warfox.agent
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.media.projection.MediaProjection
@@ -17,14 +18,18 @@ class ScreenCaptureService : Service() {
         createChannel()
         startForeground(41, notification())
         val resultCode = intent?.getIntExtra("resultCode", 0) ?: 0
-        val data = intent?.getParcelableExtra<Intent>("captureData")
+        val data = if (Build.VERSION.SDK_INT >= 33) {
+            intent?.getParcelableExtra("captureData", Intent::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent?.getParcelableExtra<Intent>("captureData")
+        }
         if (resultCode == 0 || data == null) {
             stopSelf()
             return START_NOT_STICKY
         }
         val manager = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         projection = manager.getMediaProjection(resultCode, data)
-        // Capture pipeline is deliberately not started until the user enables a task in the UI.
         return START_NOT_STICKY
     }
 
@@ -35,14 +40,21 @@ class ScreenCaptureService : Service() {
         }
     }
 
-    private fun notification(): Notification =
-        if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, "warfox_capture")
+    private fun notification(): Notification {
+        val stopIntent = Intent(this, StopCaptureReceiver::class.java)
+        val pending = PendingIntent.getBroadcast(
+            this, 42, stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, "warfox_capture")
+            else Notification.Builder(this)
+        return builder
             .setContentTitle("WARFOX AI AGENT")
-            .setContentText("مشاركة الشاشة نشطة — يمكنك إيقافها من التطبيق.")
+            .setContentText("جلسة مشاركة الشاشة نشطة")
             .setSmallIcon(android.R.drawable.ic_menu_view)
+            .addAction(android.R.drawable.ic_media_pause, "إيقاف المشاركة", pending)
             .build()
-        else Notification.Builder(this).setContentTitle("WARFOX AI AGENT")
-            .setSmallIcon(android.R.drawable.ic_menu_view).build()
+    }
 
     override fun onDestroy() {
         projection?.stop()
