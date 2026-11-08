@@ -40,7 +40,7 @@ class AiProviderSettingsActivity : Activity() {
     private fun addField(root: LinearLayout, label: String, value: String, hintText: String): EditText {
         root.addView(TextView(this).apply { text = label; textSize = 13f; setTextColor(Color.rgb(255, 153, 67)); setPadding(0, dp(8), 0, dp(5)) })
         return EditText(this).apply {
-            setText(value); hint = hintText; setHintTextColor(Color.rgb(125, 139, 158)); setTextColor(Color.WHITE); textSize = 14f; singleLine = true
+            setText(value); hint = hintText; setHintTextColor(Color.rgb(125, 139, 158)); setTextColor(Color.WHITE); textSize = 14f; setSingleLine(true)
             setPadding(dp(12), dp(8), dp(12), dp(8)); setBackgroundColor(Color.rgb(31, 41, 56))
             root.addView(this, LinearLayout.LayoutParams(-1, dp(52)))
         }
