@@ -29,6 +29,7 @@ class MainActivity : Activity() {
     private lateinit var prompt: EditText
     private lateinit var screenPreview: ImageView
     private lateinit var screenDescription: TextView
+    private lateinit var taskMemory: TaskMemory
     private var captureReceiverRegistered = false
     private val captureReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -59,6 +60,11 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        taskMemory = TaskMemory(this)
+        try {
+            val statusIntent = Intent(this, AgentStatusService::class.java)
+            if (Build.VERSION.SDK_INT >= 26) startForegroundService(statusIntent) else startService(statusIntent)
+        } catch (_: Exception) { }
         window.statusBarColor = Color.rgb(15, 20, 29)
         window.navigationBarColor = Color.rgb(15, 20, 29)
         window.decorView.systemUiVisibility = 0
@@ -103,6 +109,7 @@ class MainActivity : Activity() {
         root.addView(subtitle)
         root.addView(prompt, LinearLayout.LayoutParams(-1, dp(132)))
         root.addView(actionButton("إرسال  ➤", Color.rgb(255, 132, 35)) { submitTask() })
+        root.addView(actionButton("استكمال آخر مهمة محفوظة", Color.rgb(65, 91, 125)) { resumeLastTask() })
         root.addView(status)
         screenPreview = ImageView(this).apply {
             visibility = View.GONE
@@ -152,6 +159,7 @@ class MainActivity : Activity() {
             AgentRuntime.stop()
             stopService(Intent(this, ScreenCaptureService::class.java))
             stopService(Intent(this, StopOverlayService::class.java))
+            stopService(Intent(this, AgentStatusService::class.java))
             status.text = "تم إيقاف التحكم ومشاركة الشاشة والزر العائم."
         })
         root.addView(sectionLabel("التطبيقات"))
@@ -196,6 +204,7 @@ class MainActivity : Activity() {
         val message = prompt.text.toString().trim()
         if (message.isEmpty()) { status.text = "اكتب وصف المهمة أولاً."; return }
         if (message.length > 3000) { status.text = "الحد الأقصى للوصف 3000 حرف."; return }
+        taskMemory.saveDraft(message)
         status.text = "جارٍ إرسال المهمة..."
         executor.execute {
             try {
@@ -203,12 +212,42 @@ class MainActivity : Activity() {
                 val created = api.createTask(message)
                 if (!created.optBoolean("ok")) throw IllegalStateException(created.optString("error", "تعذر إنشاء المهمة"))
                 val taskId = created.getString("task_id")
+                taskMemory.save(taskId, message, "started")
                 val started = api.startWorker(taskId)
+                taskMemory.save(taskId, message, started.optString("status", "started"))
                 runOnUiThread {
                     status.text = "تم إرسال المهمة بنجاح.\nرقم المهمة: $taskId\nحالة التشغيل: ${started.optString("status", "تم الإرسال")}"
                 }
             } catch (error: Exception) {
                 runOnUiThread { status.text = "تعذر الاتصال بمحرك WARFOX: ${error.message}\nتأكد أن خادم Termux يعمل على الهاتف." }
+            }
+        }
+    }
+
+    private fun resumeLastTask() {
+        val saved = taskMemory.latest()
+        val taskId = saved.optString("task_id")
+        val savedPrompt = saved.optString("prompt")
+        if (taskId.isBlank()) {
+            status.text = if (savedPrompt.isNotBlank()) "آخر وصف محفوظ كمسودة، لكنه لم يحصل على رقم مهمة بعد." else "لا توجد مهمة سابقة محفوظة."
+            if (savedPrompt.isNotBlank()) prompt.setText(savedPrompt)
+            return
+        }
+        status.text = "جارٍ استرجاع حالة المهمة السابقة..."
+        executor.execute {
+            try {
+                val result = TaskApi().getTask(taskId)
+                val readable = result.toString(2).take(5000)
+                runOnUiThread {
+                    prompt.setText(savedPrompt)
+                    screenDescription.text = readable
+                    status.text = "تم استرجاع بيانات المهمة $taskId. راجع الحالة قبل طلب استكمال التنفيذ."
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    prompt.setText(savedPrompt)
+                    status.text = "تعذر الاتصال لاسترجاع المهمة. تم الاحتفاظ بالوصف محلياً: ${error.message}"
+                }
             }
         }
     }
