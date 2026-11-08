@@ -12,6 +12,8 @@ import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Build
+import android.os.BatteryManager
+import android.os.Debug
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
@@ -189,6 +191,7 @@ class MainActivity : Activity() {
         applyPatchButton = actionButton("موافقة وتطبيق مع نسخة احتياطية", Color.rgb(40, 112, 85)) { approveAndApplyPatch() }
         applyPatchButton.isEnabled = false
         root.addView(applyPatchButton)
+        root.addView(actionButton("تشخيص الذاكرة والبطارية", Color.rgb(49, 65, 86)) { showDiagnostics() })
         root.addView(sectionLabel("التطبيقات"))
         root.addView(actionButton("فتح Godot Engine 4", Color.rgb(49, 65, 86)) { openGodot() })
 
@@ -253,6 +256,17 @@ class MainActivity : Activity() {
     }
 
 
+    private fun showDiagnostics() {
+        val runtime = Runtime.getRuntime()
+        val usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+        val maxMb = runtime.maxMemory() / (1024 * 1024)
+        val pssMb = Debug.getPss() / 1024
+        val battery = try {
+            (getSystemService(BATTERY_SERVICE) as BatteryManager).getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        } catch (_: Exception) { -1 }
+        screenDescription.text = "استهلاك ذاكرة التطبيق التقريبي: ${usedMb}MB من ${maxMb}MB\\nذاكرة العملية PSS: ${pssMb}MB\\nالبطارية: ${if (battery >= 0) "$battery%" else "غير متاحة"}\\nهذه قراءة لحظية وليست اختبار استهلاك طويل المدى."
+        status.text = "اكتمل فحص الموارد اللحظي."
+    }
     private fun loadPatchProposal() {
         val taskId = currentTaskId.ifBlank { taskMemory.latest().optString("task_id") }
         if (taskId.isBlank()) {
