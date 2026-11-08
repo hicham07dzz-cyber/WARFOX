@@ -32,6 +32,28 @@ class TaskApi(private val baseUrl: String = "http://127.0.0.1:8765") {
     fun startWorker(taskId: String): JSONObject =
         post("/api/worker/run", JSONObject().put("task_id", taskId))
 
+
+    fun getPatchProposal(taskId: String): JSONObject {
+        val encodedId = java.net.URLEncoder.encode(taskId, "UTF-8")
+        val connection = URL(baseUrl.trimEnd('/') + "/api/patch/proposal?id=$encodedId")
+            .openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.connectTimeout = 8000
+        connection.readTimeout = 15000
+        return try {
+            val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
+            JSONObject(stream?.bufferedReader()?.use { it.readText() }.orEmpty().ifBlank { "{}" })
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    fun applyPatch(taskId: String, file: String): JSONObject =
+        post("/api/patch/apply", JSONObject()
+            .put("task_id", taskId)
+            .put("file", file)
+            .put("approved", true))
+
     fun getTask(taskId: String): JSONObject {
         val connection = URL(baseUrl.trimEnd('/') + "/api/chat/task?id=$taskId")
             .openConnection() as HttpURLConnection
