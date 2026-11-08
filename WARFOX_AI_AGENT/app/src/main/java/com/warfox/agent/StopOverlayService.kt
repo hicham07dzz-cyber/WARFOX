@@ -49,8 +49,8 @@ class StopOverlayService : Service() {
             gravity = Gravity.CENTER
             setPadding(0, 5, 0, 0)
             setOnClickListener {
-                AgentRuntime.stop()
-                stopService(Intent(this@StopOverlayService, ScreenCaptureService::class.java))
+                sendBroadcast(Intent(this@StopOverlayService, StopCaptureReceiver::class.java)
+                    .setAction(AgentStatusService.ACTION_STOP_ALL))
                 stopSelf()
             }
         }
