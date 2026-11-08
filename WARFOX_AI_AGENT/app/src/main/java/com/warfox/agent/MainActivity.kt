@@ -131,7 +131,7 @@ class MainActivity : Activity() {
         root.addView(heading)
         root.addView(subtitle)
         root.addView(prompt, LinearLayout.LayoutParams(-1, dp(132)))
-        root.addView(actionButton("حساب Google  ●", Color.rgb(65, 91, 125)) { startActivity(Intent(this, GoogleAccountActivity::class.java)) })
+        root.addView(actionButton("تسجيل الدخول / حساب Google  ●", Color.rgb(65, 91, 125)) { startActivity(Intent(this, GoogleAccountActivity::class.java)) })
         root.addView(actionButton("إعدادات الذكاء الاصطناعي  ⚙", Color.rgb(65, 91, 125)) { startActivity(Intent(this, AiProviderSettingsActivity::class.java)) })
         root.addView(actionButton("إرسال  ➤", Color.rgb(255, 132, 35)) { submitTask() })
         root.addView(actionButton("استكمال آخر مهمة محفوظة", Color.rgb(65, 91, 125)) { resumeLastTask() })
@@ -220,6 +220,9 @@ class MainActivity : Activity() {
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(captureReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         else @Suppress("DEPRECATION") run { registerReceiver(captureReceiver, filter) }
         captureReceiverRegistered = true
+        if (!getSharedPreferences("warfox_google_account", MODE_PRIVATE).contains("email")) {
+            startActivity(Intent(this, GoogleAccountActivity::class.java))
+        }
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
