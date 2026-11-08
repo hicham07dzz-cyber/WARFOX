@@ -9,53 +9,39 @@ import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager
-import android.widget.LinearLayout
 import android.widget.TextView
 import kotlin.math.abs
 
 class StopOverlayService : Service() {
     private var windowManager: WindowManager? = null
-    private var panel: LinearLayout? = null
-    private var params: WindowManager.LayoutParams? = null
+    private var bubble: TextView? = null
+    private var layoutParams: WindowManager.LayoutParams? = null
     private var downX = 0f
     private var downY = 0f
     private var startX = 0
     private var startY = 0
+    private var dragged = false
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
+        val view = TextView(this).apply {
+            text = "● WARFOX\nإيقاف طارئ"
+            textSize = 13f
             gravity = Gravity.CENTER
-            setPadding(14, 9, 14, 9)
+            setTextColor(Color.WHITE)
+            setPadding(18, 12, 18, 12)
             background = GradientDrawable().apply {
                 setColor(Color.rgb(190, 38, 48))
-                cornerRadius = 42f
+                cornerRadius = 48f
                 setStroke(2, Color.WHITE)
             }
+            contentDescription = "اسحب لتحريك زر WARFOX، واضغط لإيقاف الوكيل"
+            isClickable = true
+            isFocusable = true
         }
-        val title = TextView(this).apply {
-            text = "● WARFOX"
-            textSize = 13f
-            setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
-        }
-        val stop = TextView(this).apply {
-            text = "إيقاف الوكيل"
-            textSize = 12f
-            setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
-            setPadding(0, 5, 0, 0)
-            setOnClickListener {
-                sendBroadcast(Intent(this@StopOverlayService, StopCaptureReceiver::class.java)
-                    .setAction(AgentStatusService.ACTION_STOP_ALL))
-                stopSelf()
-            }
-        }
-        container.addView(title)
-        container.addView(stop)
         val type = if (Build.VERSION.SDK_INT >= 26)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         else WindowManager.LayoutParams.TYPE_PHONE
@@ -66,36 +52,49 @@ class StopOverlayService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply { gravity = Gravity.TOP or Gravity.START; x = 12; y = 220 }
-        container.setOnTouchListener { _, event ->
+
+        view.setOnTouchListener { target, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    downX = event.rawX; downY = event.rawY
-                    startX = lp.x; startY = lp.y
+                    downX = event.rawX
+                    downY = event.rawY
+                    startX = lp.x
+                    startY = lp.y
+                    dragged = false
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    lp.x = startX + (event.rawX - downX).toInt()
-                    lp.y = startY + (event.rawY - downY).toInt()
-                    windowManager?.updateViewLayout(container, lp)
+                    val dx = (event.rawX - downX).toInt()
+                    val dy = (event.rawY - downY).toInt()
+                    if (abs(dx) > 6 || abs(dy) > 6) dragged = true
+                    if (dragged) {
+                        lp.x = (startX + dx).coerceAtLeast(0)
+                        lp.y = (startY + dy).coerceAtLeast(0)
+                        try { windowManager?.updateViewLayout(view, lp) } catch (_: Exception) { }
+                    }
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    val moved = abs(event.rawX - downX) > 8 || abs(event.rawY - downY) > 8
-                    if (!moved) stop.performClick()
+                    if (!dragged) target.performClick()
                     true
                 }
                 else -> false
             }
         }
-        panel = container
-        params = lp
-        windowManager?.addView(container, lp)
+        view.setOnClickListener {
+            sendBroadcast(Intent(this, StopCaptureReceiver::class.java)
+                .setAction(AgentStatusService.ACTION_STOP_ALL))
+        }
+        bubble = view
+        layoutParams = lp
+        windowManager?.addView(view, lp)
     }
 
     override fun onDestroy() {
-        panel?.let { try { windowManager?.removeView(it) } catch (_: Exception) {} }
-        panel = null
+        bubble?.let { try { windowManager?.removeView(it) } catch (_: Exception) { } }
+        bubble = null
         super.onDestroy()
     }
+
     override fun onBind(intent: Intent?): IBinder? = null
 }
