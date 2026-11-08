@@ -2,9 +2,12 @@ package com.warfox.agent
 
 import android.app.Activity
 import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.BitmapFactory
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Bundle
@@ -15,6 +18,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import java.util.concurrent.Executors
@@ -22,6 +26,30 @@ import java.util.concurrent.Executors
 class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var prompt: EditText
+    private lateinit var screenPreview: ImageView
+    private var captureReceiverRegistered = false
+    private val captureReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                ScreenCaptureService.ACTION_FRAME_CAPTURED -> {
+                    val path = intent.getStringExtra(ScreenCaptureService.EXTRA_FILE_PATH) ?: return
+                    val width = intent.getIntExtra(ScreenCaptureService.EXTRA_WIDTH, 0)
+                    val height = intent.getIntExtra(ScreenCaptureService.EXTRA_HEIGHT, 0)
+                    val bitmap = BitmapFactory.decodeFile(path)
+                    if (bitmap != null) {
+                        screenPreview.setImageBitmap(bitmap)
+                        screenPreview.visibility = View.VISIBLE
+                        status.text = "نجح التقاط الشاشة محلياً: ${width}×${height}. لم تُرسل الصورة إلى الإنترنت."
+                    } else {
+                        status.text = "وصلت الصورة لكن تعذر عرضها."
+                    }
+                }
+                ScreenCaptureService.ACTION_CAPTURE_FAILED -> {
+                    status.text = "فشل التقاط الشاشة: ${intent.getStringExtra(ScreenCaptureService.EXTRA_ERROR)}"
+                }
+            }
+        }
+    }
     private val captureRequest = 4102
     private val executor = Executors.newSingleThreadExecutor()
     private var overlayPermissionPending = false
@@ -74,6 +102,14 @@ class MainActivity : Activity() {
         root.addView(prompt, LinearLayout.LayoutParams(-1, dp(132)))
         root.addView(actionButton("إرسال  ➤", Color.rgb(255, 132, 35)) { submitTask() })
         root.addView(status)
+        screenPreview = ImageView(this).apply {
+            visibility = View.GONE
+            adjustViewBounds = true
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setBackgroundColor(Color.rgb(28, 36, 48))
+            contentDescription = "آخر صورة شاشة التقطها WARFOX بموافقة المستخدم"
+        }
+        root.addView(screenPreview, LinearLayout.LayoutParams(-1, dp(220)))
         root.addView(sectionLabel("التحكم والصلاحيات"))
         root.addView(actionButton("تفعيل خدمة إمكانية الوصول", Color.rgb(49, 65, 86)) {
             accessibilitySettingsOpened = true
@@ -87,10 +123,10 @@ class MainActivity : Activity() {
                 startOverlay()
             }
         })
-        root.addView(actionButton("بدء مشاركة الشاشة", Color.rgb(40, 112, 85)) { requestScreenCapture() })
+        root.addView(actionButton("التقاط صورة للشاشة بموافقتك", Color.rgb(40, 112, 85)) { requestScreenCapture() })
         root.addView(actionButton("إيقاف مشاركة الشاشة فقط", Color.rgb(160, 94, 35)) {
             stopService(Intent(this, ScreenCaptureService::class.java))
-            status.text = "تم إيقاف مشاركة الشاشة."
+            status.text = "تم إيقاف جلسة التقاط الشاشة."
         })
         root.addView(actionButton("إيقاف الوكيل بالكامل", Color.rgb(155, 49, 55)) {
             AgentRuntime.stop()
@@ -103,6 +139,13 @@ class MainActivity : Activity() {
 
         val scroll = ScrollView(this).apply { addView(root) }
         setContentView(scroll)
+        val filter = android.content.IntentFilter().apply {
+            addAction(ScreenCaptureService.ACTION_FRAME_CAPTURED)
+            addAction(ScreenCaptureService.ACTION_CAPTURE_FAILED)
+        }
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(captureReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        else @Suppress("DEPRECATION") run { registerReceiver(captureReceiver, filter) }
+        captureReceiverRegistered = true
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
@@ -217,7 +260,7 @@ class MainActivity : Activity() {
                     putExtra("captureData", data)
                 }
                 startForegroundService(service)
-                status.text = "مشاركة الشاشة بدأت بموافقتك. لإيقافها استخدم زر إيقاف المشاركة أو إشعار WARFOX."
+                status.text = "تم منح الإذن. جارٍ التقاط صورة واحدة وحفظها محلياً..."
             } else {
                 status.text = "لم تبدأ مشاركة الشاشة لأن الإذن لم يُمنح."
             }
@@ -225,6 +268,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        if (captureReceiverRegistered) unregisterReceiver(captureReceiver)
         executor.shutdownNow()
         super.onDestroy()
     }
