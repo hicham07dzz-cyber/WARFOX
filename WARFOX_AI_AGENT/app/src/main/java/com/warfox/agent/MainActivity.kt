@@ -21,6 +21,8 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ImageView
 import android.widget.ScrollView
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 import android.widget.TextView
 import java.util.concurrent.Executors
 
@@ -30,6 +32,11 @@ class MainActivity : Activity() {
     private lateinit var screenPreview: ImageView
     private lateinit var screenDescription: TextView
     private lateinit var taskMemory: TaskMemory
+    private lateinit var proposalPreview: TextView
+    private lateinit var targetFile: Spinner
+    private lateinit var applyPatchButton: Button
+    private var currentTaskId: String = ""
+    private var proposalReady = false
     private var captureReceiverRegistered = false
     private val captureReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -163,6 +170,25 @@ class MainActivity : Activity() {
             stopService(Intent(this, AgentStatusService::class.java))
             status.text = "تم إيقاف التحكم ومشاركة الشاشة والزر العائم."
         })
+
+        root.addView(sectionLabel("مساعد Godot — مراجعة التعديلات"))
+        targetFile = Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item,
+                listOf("scripts/player.gd", "scripts/main.gd", "scenes/main.tscn"))
+        }
+        root.addView(targetFile, LinearLayout.LayoutParams(-1, dp(48)))
+        proposalPreview = TextView(this).apply {
+            text = "لن يتم تعديل ملفات Godot قبل عرض الاقتراح وموافقتك."
+            textSize = 13f
+            setTextColor(Color.rgb(220, 225, 235))
+            setPadding(dp(10), dp(10), dp(10), dp(10))
+            setBackgroundColor(Color.rgb(28, 36, 48))
+        }
+        root.addView(proposalPreview, LinearLayout.LayoutParams(-1, ViewGroup.LayoutParams.WRAP_CONTENT))
+        root.addView(actionButton("عرض اقتراح التعديل", Color.rgb(65, 91, 125)) { loadPatchProposal() })
+        applyPatchButton = actionButton("موافقة وتطبيق مع نسخة احتياطية", Color.rgb(40, 112, 85)) { approveAndApplyPatch() }
+        applyPatchButton.isEnabled = false
+        root.addView(applyPatchButton)
         root.addView(sectionLabel("التطبيقات"))
         root.addView(actionButton("فتح Godot Engine 4", Color.rgb(49, 65, 86)) { openGodot() })
 
@@ -213,6 +239,7 @@ class MainActivity : Activity() {
                 val created = api.createTask(message)
                 if (!created.optBoolean("ok")) throw IllegalStateException(created.optString("error", "تعذر إنشاء المهمة"))
                 val taskId = created.getString("task_id")
+                currentTaskId = taskId
                 taskMemory.save(taskId, message, "started")
                 val started = api.startWorker(taskId)
                 taskMemory.save(taskId, message, started.optString("status", "started"))
@@ -225,10 +252,67 @@ class MainActivity : Activity() {
         }
     }
 
+
+    private fun loadPatchProposal() {
+        val taskId = currentTaskId.ifBlank { taskMemory.latest().optString("task_id") }
+        if (taskId.isBlank()) {
+            status.text = "أرسل مهمة إلى محرك WARFOX أولاً."
+            return
+        }
+        status.text = "جارٍ جلب اقتراح التعديل..."
+        executor.execute {
+            try {
+                val response = TaskApi().getPatchProposal(taskId)
+                val patch = response.opt("patch")
+                val exists = response.optBoolean("ok") && patch != null && patch != JSONObject.NULL
+                runOnUiThread {
+                    proposalReady = exists
+                    applyPatchButton.isEnabled = exists
+                    proposalPreview.text = if (exists) response.toString(2).take(10000)
+                        else "لا يوجد اقتراح جاهز لهذه المهمة.\n" + response.toString(2).take(3000)
+                    status.text = if (exists) "راجع الاقتراح واختر الملف المستهدف. لن يحدث تعديل قبل ضغط زر الموافقة."
+                        else "لم يتم العثور على اقتراح قابل للتطبيق."
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    proposalReady = false
+                    applyPatchButton.isEnabled = false
+                    status.text = "تعذر جلب الاقتراح: ${error.message}"
+                }
+            }
+        }
+    }
+
+    private fun approveAndApplyPatch() {
+        val taskId = currentTaskId.ifBlank { taskMemory.latest().optString("task_id") }
+        val file = targetFile.selectedItem?.toString().orEmpty()
+        if (!proposalReady || taskId.isBlank() || file.isBlank()) {
+            status.text = "اعرض الاقتراح أولاً واختر الملف قبل الموافقة."
+            return
+        }
+        applyPatchButton.isEnabled = false
+        status.text = "جارٍ تطبيق التعديل الذي وافقت عليه وإنشاء النسخة الاحتياطية..."
+        executor.execute {
+            try {
+                val result = TaskApi().applyPatch(taskId, file)
+                val ok = result.optBoolean("ok")
+                runOnUiThread {
+                    proposalReady = false
+                    proposalPreview.text = result.toString(2).take(8000)
+                    status.text = if (ok) "أبلغ الخادم عن نجاح التطبيق. تحقق من وجود النسخة الاحتياطية قبل متابعة العمل."
+                        else "لم يؤكد الخادم نجاح التطبيق؛ راجع تفاصيل النتيجة."
+                }
+            } catch (error: Exception) {
+                runOnUiThread { status.text = "فشل تطبيق الاقتراح: ${error.message}" }
+            }
+        }
+    }
+
     private fun resumeLastTask() {
         val saved = taskMemory.latest()
         val taskId = saved.optString("task_id")
         val savedPrompt = saved.optString("prompt")
+        currentTaskId = taskId
         if (taskId.isBlank()) {
             status.text = if (savedPrompt.isNotBlank()) "آخر وصف محفوظ كمسودة، لكنه لم يحصل على رقم مهمة بعد." else "لا توجد مهمة سابقة محفوظة."
             if (savedPrompt.isNotBlank()) prompt.setText(savedPrompt)
