@@ -19,6 +19,7 @@ class StopOverlayService : Service() {
         stopButton = Button(this).apply {
             text = "إيقاف WARFOX"
             setOnClickListener {
+                AgentRuntime.stop()
                 stopService(Intent(this@StopOverlayService, ScreenCaptureService::class.java))
                 stopSelf()
             }
