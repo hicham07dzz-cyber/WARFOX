@@ -1,0 +1,15 @@
+const $=id=>document.getElementById(id);let refFile=null,clipFiles=[],plan=null;
+$("reference").addEventListener("change",e=>{refFile=e.target.files[0]||null;$("refName").textContent=refFile?refFile.name:"اضغط لاختيار فيديو"});
+$("clips").addEventListener("change",e=>{clipFiles=[...e.target.files];$("clipName").textContent=clipFiles.length?clipFiles.length+" فيديوهات مختارة":"اضغط لاختيار اللقطات"});
+function metadata(file){return new Promise(resolve=>{const v=document.createElement("video");const u=URL.createObjectURL(file);v.preload="metadata";v.onloadedmetadata=()=>{resolve({name:file.name,duration:Number.isFinite(v.duration)?v.duration:0,width:v.videoWidth,height:v.videoHeight,size:file.size});URL.revokeObjectURL(u)};v.onerror=()=>{resolve({name:file.name,duration:0,width:0,height:0,size:file.size});URL.revokeObjectURL(u)};v.src=u})}
+$("analyze").addEventListener("click",async()=>{if(!refFile||!clipFiles.length){$("status").textContent="اختر الفيديو المرجعي ولقطة واحدة على الأقل أولاً.";return}
+$("analyze").disabled=true;$("status").textContent="جارٍ قراءة بيانات الفيديوهات محلياً…";
+const [reference,clips]=await Promise.all([metadata(refFile),Promise.all(clipFiles.map(metadata))]);
+const target=Number($("duration").value);let remaining=target;const sorted=[...clips].sort((a,b)=>b.duration-a.duration);const timeline=[];
+for(const c of sorted){if(remaining<=0)break;const use=Math.min(c.duration||remaining,remaining);timeline.push({...c,selectedDuration:Number(use.toFixed(2)),trimStart:0,trimEnd:Number(use.toFixed(2))});remaining-=use}
+plan={app:"SmartCut AI prototype",reference:{name:reference.name,duration:reference.duration,width:reference.width,height:reference.height},settings:{targetDuration:target,ratio:$("ratio").value,style:$("style").value},timeline,unfilledSeconds:Number(Math.max(0,remaining).toFixed(2)),notice:"Metadata-based draft only. No semantic scene understanding, transitions, effects, grading or final rendering."};
+$("summary").textContent="المرجع: "+reference.name+" — المدة المطلوبة: "+target+" ثانية. تم اقتراح "+timeline.length+" مقطعاً.";
+$("timeline").innerHTML=timeline.map((c,i)=>'<div class="clip-row"><b>'+(i+1)+'. '+escapeHtml(c.name)+'</b><br><small>المدة المقترحة: '+c.selectedDuration+' ث · الأصل: '+(c.duration?c.duration.toFixed(1):"غير معروفة")+' ث</small></div>').join("")+(plan.unfilledSeconds?'<p>تبقى '+plan.unfilledSeconds+' ثانية تحتاج لقطات إضافية.</p>':"");
+$("results").classList.remove("hidden");$("status").textContent="اكتمل إنشاء مخطط أولي اعتماداً على بيانات الملفات فقط.";$("analyze").disabled=false});
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+$("download").addEventListener("click",()=>{if(!plan)return;const blob=new Blob([JSON.stringify(plan,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="smartcut-edit-plan.json";a.click();URL.revokeObjectURL(a.href)});
