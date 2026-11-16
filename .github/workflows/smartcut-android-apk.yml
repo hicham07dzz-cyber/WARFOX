@@ -35,7 +35,9 @@ jobs:
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
       - name: Install Capacitor dependencies
         working-directory: smartcut-android
-        run: npm install
+        run: |
+          npm install
+          npm run build
       - name: Generate Android project
         working-directory: smartcut-android
         run: npx cap add android
