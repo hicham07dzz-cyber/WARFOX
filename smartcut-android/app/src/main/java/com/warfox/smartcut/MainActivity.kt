@@ -71,6 +71,18 @@ class MainActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode != RESULT_OK || data == null) return
+        if (requestCode == savePlan) {
+            val destination = data.data ?: return
+            try {
+                contentResolver.openOutputStream(destination)?.use { output ->
+                    output.write(buildPlan().toString(2).toByteArray(Charsets.UTF_8))
+                }
+                status.text = "تم حفظ ملف خطة المونتاج JSON."
+            } catch (error: Exception) {
+                status.text = "تعذر حفظ الخطة: " + (error.message ?: "خطأ غير معروف")
+            }
+            return
+        }
         when (requestCode) {
             pickReference -> {
                 reference = data.data
