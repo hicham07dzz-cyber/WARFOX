@@ -33,6 +33,15 @@
   <section class="panel" id="stepReference" data-step="1">
    <div class="panel-head"><div><span class="step-kicker">STEP 01 · REFERENCE</span><h3>ابدأ بالفيديو المرجعي</h3><p class="stepIntro">اختر الفيديو الذي يعجبك أسلوب مونتاجه. سنفحص الإيقاع والسطوع والتشبّع والتغيّر البصري.</p></div><div class="panel-icon">◫</div></div>
    <label class="upload dropzone"><span class="drop-icon">↥</span><b>أفلت الفيديو هنا أو اختره</b><small>MP4 · MOV · WEBM — ملف فيديو واحد</small><input id="reference" type="file" accept="video/*"><i id="referenceLabel">لم يتم اختيار فيديو</i></label>
+   <div class="engine-note ai-connection">
+    <span>✦</span><div><b>محرك الفهم الذكي عبر الإنترنت</b><small>اتصال اختياري بـ Gemini لتحليل محتوى المشاهد فعلياً. الفيديو المختار أو إطارات منه سترسل إلى Google عند تشغيل التحليل.</small></div>
+   </div>
+   <label class="field">مفتاح Gemini API (يبقى على هذا الجهاز)
+    <input id="geminiKey" type="password" autocomplete="off" placeholder="ألصق مفتاحك هنا — لا ترسله في المحادثة">
+   </label>
+   <div class="actions"><button id="saveGeminiKey" class="secondary" type="button">حفظ المفتاح على الجهاز</button><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">الحصول على مفتاح من Google AI Studio</a></div>
+   <div class="actions"><button id="analyzeReferenceAI" type="button">✦ تحليل المرجع بالذكاء الاصطناعي</button></div>
+   <div id="aiReferenceStatus" class="analysisStatus">التحليل الذكي يحتاج مفتاح Gemini واتصال إنترنت.</div>
    <div class="actions"><button id="analyzeReference" type="button"><span>✦</span> تحليل أسلوب المرجع</button></div>
    <div id="analysisStatus" class="analysisStatus">بانتظار الفيديو المرجعي.</div><div id="analysisResults"></div>
    <p class="smallNote">ملاحظة تقنية: التحليل المتاح حالياً يعتمد قياسات بصرية محلية، وليس فهماً دلالياً كاملاً للمشاهد.</p>
@@ -44,6 +53,8 @@
   </section>
   <section class="panel hidden" id="stepAnalysis" data-step="3">
    <div class="panel-head"><div><span class="step-kicker">STEP 03 · SMART ANALYSIS</span><h3>حلّل واختر أفضل اللقطات</h3><p class="stepIntro">افحص المقاطع، راجع ترتيبها واقتراحات القص، وحلّل الموسيقى إذا أضفتها.</p></div><div class="panel-icon">⌁</div></div>
+   <div class="actions"><button id="analyzeClipsAI" type="button">✦ فهم المشاهد واكتشاف أفضل اللقطات بالذكاء الاصطناعي</button></div>
+   <div id="aiClipsStatus" class="analysisStatus">اربط Gemini في المرحلة الأولى لتفعيل الفهم الدلالي.</div>
    <div class="action-grid"><button id="analyzeClips" class="secondary" type="button">فحص المقاطع</button><button id="autoSelect" type="button">اختيار تلقائي</button><button id="analyzeBeats" class="secondary" type="button">تحليل الموسيقى</button><button id="syncBeats" class="secondary" type="button">مزامنة القصات</button></div>
    <div id="clipAnalysisStatus" class="analysisStatus">ابدأ بفحص جميع المقاطع.</div><div id="clipAnalysisResults"></div>
    <p class="smallNote">الترتيب الحالي تقريبي ويعتمد على الحركة والتغيّر البصري، ولا يتعرف بعد على معنى الحدث داخل الفيديو.</p>
