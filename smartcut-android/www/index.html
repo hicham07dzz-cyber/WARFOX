@@ -5,13 +5,18 @@
 <section class="panel"><h2>1 — ملفاتك</h2><div class="grid">
 <label class="upload"><b>لقطات الفيديو</b><small>اختر عدة مقاطع</small><input id="clips" type="file" accept="video/*" multiple><i id="clipLabel">اختيار الفيديوهات</i></label>
 <label class="upload"><b>موسيقى خلفية</b><small>اختياري</small><input id="music" type="file" accept="audio/*"><i id="musicLabel">اختيار ملف صوتي</i></label></div><div id="clipList"></div></section>
-<section class="panel"><h2>2 — إعدادات التصدير</h2><div class="settings">
+<section class="panel"><h2>2 — تحليل فعلي للفيديو</h2>
+<label class="upload"><b>الفيديو المرجعي</b><small>حلّل الإيقاع البصري والألوان للمقارنة، لاستخراج أسلوبه رقمياً</small><input id="reference" type="file" accept="video/*"><i id="referenceLabel">اختيار فيديو مرجعي</i></label>
+<div class="actions"><button id="analyzeReference" class="secondary" type="button">تحليل المرجع</button><button id="analyzeClips" type="button">اكتشاف اللقطات</button></div>
+<div id="analysisStatus" class="analysisStatus">التحليل المحلي يقيس الحركة والسطوع والتشبع وتغير المشاهد؛ لا يفهم معنى الأشخاص أو الأحداث.</div><div id="analysisResults"></div>
+<p class="smallNote">هذه خوارزمية تحليل إشارات بصرية وليست نموذج فهم مشاهد. اقتراحات اللقطات احتمالية وتحتاج مراجعتك.</p></section>
+<section class="panel"><h2>3 — إعدادات التصدير</h2><div class="settings">
 <label>المدة<select id="target"><option>15</option><option selected>30</option><option>45</option><option>60</option></select></label>
 <label>المقاس<select id="ratio"><option value="9:16">عمودي 9:16</option><option value="16:9">أفقي 16:9</option><option value="1:1">مربع 1:1</option></select></label>
 <label>الجودة<select id="quality"><option value="fast">سريع</option><option value="balanced" selected>متوازن</option><option value="high">عالٍ</option></select></label>
 <label>صوت الموسيقى<select id="volume"><option value=".1">10%</option><option value=".2" selected>20%</option><option value=".35">35%</option><option value=".5">50%</option></select></label></div>
 <label class="field">نص يظهر على الفيديو<textarea id="caption" rows="2" placeholder="اختياري"></textarea></label>
 <div class="actions"><button id="loadEngine" class="secondary">تحميل محرك التصدير</button><button id="export" disabled>إنشاء MP4</button></div><div id="status">اختر مقطعاً واحداً على الأقل.</div><div class="progress"><div id="progressBar"></div></div></section>
-<section class="panel"><h2>3 — المعاينة</h2><video id="preview" controls playsinline></video><a id="download" class="download hidden">تنزيل MP4</a></section>
-<section class="notice"><b>تنبيه حول ميزات الذكاء الاصطناعي</b><p>هذا إصدار أولي يوفّر القص وتجميع المقاطع والتصدير محلياً. لا يحتوي بعد على تحليل دلالي للمشاهد أو Whisper أو اكتشاف الترند التلقائي أو الترجمة التلقائية أو الانتقالات الذكية. ملفات الفيديو لا تُرفع إلى خادم.</p></section>
+<section class="panel"><h2>4 — المعاينة</h2><video id="preview" controls playsinline></video><a id="download" class="download hidden">تنزيل MP4</a></section>
+<section class="notice"><b>الميزات غير المفعّلة بعد</b><p>اكتشاف الترند يحتاج مصدراً حياً موثوقاً للترندات، وفهم المشاهد/تقليد المونتاج يحتاج نموذج رؤية، والترجمة تحتاج نموذج تعرف على الكلام مثل Whisper. لم أضع أزراراً وهمية لهذه الوظائف. التحليل أعلاه يعمل محلياً ولا يرفع الفيديو.</p></section>
 </main><footer>SMARTCUT AI · Android Preview</footer><script type="module" src="app.js"></script></body></html>
