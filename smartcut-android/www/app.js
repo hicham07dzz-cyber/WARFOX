@@ -1,3 +1,4 @@
+import { analyzeVideoWithGemini, getAIKey, saveAIKey } from "./ai.js";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 const $=id=>id.startsWith("[")?document.querySelector(id):document.getElementById(id);let files=[],music=null,engine=null,outUrl=null,durations=[];
@@ -17,7 +18,7 @@ await engine.exec([...args,"final.mp4"]);const data=await engine.readFile("final
 
 
 // Local media analysis: measurable visual/audio signals, not semantic AI.
-let referenceFile=null, referenceProfile=null, lastClipProfiles=[], detectedBeats=[];
+let referenceFile=null, referenceProfile=null, lastClipProfiles=[], detectedBeats=[], aiClipResults=[];
 $("reference").onchange=e=>{referenceFile=e.target.files[0]||null;$("referenceLabel").textContent=referenceFile?referenceFile.name:"اختيار فيديو مرجعي";referenceProfile=null};
 $("analyzeReference").onclick=async()=>{if(!referenceFile){$("analysisStatus").textContent="اختر الفيديو المرجعي أولاً.";return}try{$("analyzeReference").disabled=true;$("analysisStatus").textContent="جارٍ تحليل عينات الفيديو المرجعي محلياً...";referenceProfile=await inspectVideo(referenceFile);$("analysisStatus").textContent="اكتمل تحليل المرجع: "+referenceProfile.pace.toFixed(2)+" تغيّر/ثانية، سطوع "+referenceProfile.brightness.toFixed(2)+"، تشبّع "+referenceProfile.saturation.toFixed(2)+". هذه قياسات وليست فهماً دلالياً.";renderReferenceAnalysis()}catch(e){$("analysisStatus").textContent="تعذر تحليل المرجع: "+e.message}finally{$("analyzeReference").disabled=false}};
 $("analyzeClips").onclick=async()=>{if(!files.length){$("clipAnalysisStatus").textContent="اختر مقاطعك أولاً.";return}try{$("analyzeClips").disabled=true;lastClipProfiles=[];$("clipAnalysisStatus").textContent="جارٍ فحص الحركة وتغير الإطارات في المقاطع...";for(let i=0;i<files.length;i++){const p=await inspectVideo(files[i]);lastClipProfiles.push(p);$("clipAnalysisStatus").textContent="تم تحليل "+(i+1)+" من "+files.length+" مقاطع"}renderAnalysis()}catch(e){$("clipAnalysisStatus").textContent="تعذر تحليل المقاطع: "+e.message}finally{$("analyzeClips").disabled=false}};
@@ -28,4 +29,51 @@ $("analyzeBeats").onclick=async()=>{if(!music){$("clipAnalysisStatus").textConte
 
 $("syncBeats").onclick=()=>{if(!detectedBeats.length){$("clipAnalysisStatus").textContent="حلّل ملف الموسيقى أولاً.";return}if(!files.length){$("clipAnalysisStatus").textContent="اختر مقاطع الفيديو أولاً.";return}let elapsed=0,changed=0;for(let i=0;i<files.length;i++){const a=$("[data-start='"+i+"']"),b=$("[data-end='"+i+"']");if(!a||!b)continue;const start=Math.max(0,Number(a.value)||0),oldEnd=Math.min(durations[i],Number(b.value)||durations[i]),oldLen=oldEnd-start;if(oldLen<=0)continue;const desired=elapsed+oldLen;let beat=detectedBeats.reduce((best,t)=>Math.abs(t-desired)<Math.abs(best-desired)?t:best,detectedBeats[0]);let newLen=beat-elapsed;if(newLen<.35||newLen>durations[i]-start){elapsed+=oldLen;continue}b.value=(start+newLen).toFixed(2);elapsed+=newLen;changed++} $("clipAnalysisStatus").textContent="تم ضبط "+changed+" نهاية قص على أقرب نبضة صوتية. راجع المقاطع؛ لم تُغيّر بداياتها."};
 
-$("autoSelect").onclick=()=>{if(!files.length||!lastClipProfiles.length){$("clipAnalysisStatus").textContent="حلّل المقاطع أولاً.";return}const target=Number($("target").value);const ranked=lastClipProfiles.map((p,i)=>{const win=Math.min(5,p.duration),c=[];for(let st=0;st+win<=p.duration+.01;st+=Math.max(.5,win/4)){const frames=p.frames.filter(f=>f.time>=st&&f.time<st+win);if(!frames.length)continue;const motion=frames.reduce((v,x)=>v+x.motion,0)/frames.length,bright=frames.reduce((v,x)=>v+x.brightness,0)/frames.length,color=referenceProfile?Math.max(0,1-Math.abs(bright-referenceProfile.brightness)-Math.abs(p.saturation-referenceProfile.saturation)):.5;c.push({st,en:Math.min(p.duration,st+win),score:motion*.7+color*.3})}c.sort((x,y)=>y.score-x.score);return{i,best:c[0]}}).filter(x=>x.best).sort((x,y)=>y.best.score-x.best.score);let remaining=target,chosen=[];for(const x of ranked){if(remaining<=0)break;const len=Math.min(x.best.en-x.best.st,remaining),start=$("[data-start='"+x.i+"']"),end=$("[data-end='"+x.i+"']");start.value=x.best.st.toFixed(2);end.value=(x.best.st+len).toFixed(2);remaining-=len;chosen.push(x.i)}for(const x of ranked){if(!chosen.includes(x.i)){const start=$("[data-start='"+x.i+"']"),end=$("[data-end='"+x.i+"']");if(start&&end){start.value="0";end.value="0.1"}}}const selectedSeconds=target-remaining;$("clipAnalysisStatus").textContent="اختيرت "+chosen.length+" مقاطع آلياً لمدة "+selectedSeconds.toFixed(1)+" من "+target+" ثانية مطلوبة، حسب الحركة والتشابه التقريبي مع المرجع. المقاطع غير المختارة ستُستبعد من التصدير. راجع الاختيارات؛ هذا ترتيب بصري وليس فهماً لمعنى المشاهد."};
+$("autoSelect").onclick=()=>{if(files.length && aiClipResults.length){let remaining=Number($("target").value),used=0;for(let i=0;i<files.length;i++){const row=aiClipResults[i];const best=row?.result?.best_moments?.[0] || row?.result?.scenes?.filter(x=>x.importance>=3).sort((a,b)=>b.importance-a.importance)[0];const a=document.querySelector("[data-start=\\""+i+"\\"]"),b=document.querySelector("[data-end=\\""+i+"\\"]");if(!a||!b)continue;if(!best){a.value="0";b.value="0.1";continue}const st=Math.max(0,Number(best.start)||0),en=Math.min(durations[i],Number(best.end)||durations[i]),len=Math.min(Math.max(.25,en-st),remaining);if(len<=0){a.value="0";b.value="0.1";continue}a.value=st.toFixed(2);b.value=(st+len).toFixed(2);remaining-=len;used+=len} $("clipAnalysisStatus").textContent="تم تطبيق أفضل اللقطات التي حددها Gemini: "+used.toFixed(1)+" ثانية. راجع الاختيارات قبل التصدير.";return}if(!files.length||!lastClipProfiles.length){$("clipAnalysisStatus").textContent="حلّل المقاطع أولاً.";return}const target=Number($("target").value);const ranked=lastClipProfiles.map((p,i)=>{const win=Math.min(5,p.duration),c=[];for(let st=0;st+win<=p.duration+.01;st+=Math.max(.5,win/4)){const frames=p.frames.filter(f=>f.time>=st&&f.time<st+win);if(!frames.length)continue;const motion=frames.reduce((v,x)=>v+x.motion,0)/frames.length,bright=frames.reduce((v,x)=>v+x.brightness,0)/frames.length,color=referenceProfile?Math.max(0,1-Math.abs(bright-referenceProfile.brightness)-Math.abs(p.saturation-referenceProfile.saturation)):.5;c.push({st,en:Math.min(p.duration,st+win),score:motion*.7+color*.3})}c.sort((x,y)=>y.score-x.score);return{i,best:c[0]}}).filter(x=>x.best).sort((x,y)=>y.best.score-x.best.score);let remaining=target,chosen=[];for(const x of ranked){if(remaining<=0)break;const len=Math.min(x.best.en-x.best.st,remaining),start=$("[data-start='"+x.i+"']"),end=$("[data-end='"+x.i+"']");start.value=x.best.st.toFixed(2);end.value=(x.best.st+len).toFixed(2);remaining-=len;chosen.push(x.i)}for(const x of ranked){if(!chosen.includes(x.i)){const start=$("[data-start='"+x.i+"']"),end=$("[data-end='"+x.i+"']");if(start&&end){start.value="0";end.value="0.1"}}}const selectedSeconds=target-remaining;$("clipAnalysisStatus").textContent="اختيرت "+chosen.length+" مقاطع آلياً لمدة "+selectedSeconds.toFixed(1)+" من "+target+" ثانية مطلوبة، حسب الحركة والتشابه التقريبي مع المرجع. المقاطع غير المختارة ستُستبعد من التصدير. راجع الاختيارات؛ هذا ترتيب بصري وليس فهماً لمعنى المشاهد."};
+
+
+// Optional real semantic analysis via the user's own Gemini API key.
+$("geminiKey").value = getAIKey();
+$("saveGeminiKey").onclick = () => {
+  const key = saveAIKey($("geminiKey").value);
+  $("aiReferenceStatus").textContent = key ? "تم حفظ المفتاح محلياً على هذا الجهاز." : "تم مسح المفتاح المحفوظ.";
+};
+$("analyzeReferenceAI").onclick = async () => {
+  if (!referenceFile) { $("aiReferenceStatus").textContent = "اختر الفيديو المرجعي أولاً."; return; }
+  try {
+    $("analyzeReferenceAI").disabled = true;
+    $("aiReferenceStatus").textContent = "يرسل التطبيق عينات إطارات إلى Gemini لفهم الأسلوب...";
+    const data = await analyzeVideoWithGemini(referenceFile, getAIKey(), "reference");
+    window.smartcutReferenceAI = data.result;
+    $("aiReferenceStatus").textContent = "اكتمل الفهم الدلالي للمرجع (" + data.sampledFrames + " إطارات).";
+    const box = document.createElement("div"); box.className = "analysisCard";
+    const heading = document.createElement("b"); heading.textContent = data.result.genre || "تحليل أسلوب المرجع"; box.append(heading);
+    const summary = document.createElement("p"); summary.textContent = data.result.summary || ""; box.append(summary);
+    const recipe = document.createElement("ul");
+    (data.result.editing_recipe || []).forEach(item => { const li=document.createElement("li"); li.textContent=String(item); recipe.append(li); });
+    box.append(recipe); $("analysisResults").append(box);
+  } catch (e) { $("aiReferenceStatus").textContent = "تعذر تحليل Gemini: " + e.message; }
+  finally { $("analyzeReferenceAI").disabled = false; }
+};
+$("analyzeClipsAI").onclick = async () => {
+  if (!files.length) { $("aiClipsStatus").textContent = "اختر مقاطع الفيديو أولاً."; return; }
+  try {
+    $("analyzeClipsAI").disabled = true; aiClipResults = [];
+    for (let i=0; i<files.length; i++) {
+      $("aiClipsStatus").textContent = "Gemini يفهم المقطع " + (i+1) + " من " + files.length + "...";
+      aiClipResults[i] = await analyzeVideoWithGemini(files[i], getAIKey(), "clip");
+    }
+    $("aiClipsStatus").textContent = "اكتمل فهم " + aiClipResults.length + " مقاطع. اضغط «اختيار تلقائي» لتطبيق أفضل اللقطات.";
+    const out = $("clipAnalysisResults");
+    const card = document.createElement("div"); card.className="analysisCard";
+    aiClipResults.forEach((row,i) => {
+      const p=document.createElement("p");
+      const moments=row.result.best_moments || [];
+      p.textContent=(files[i]?.name || ("المقطع "+(i+1)))+": "+(row.result.summary || "تم التحليل")+
+        (moments.length ? " — أفضل لحظة: "+moments[0].start+"s إلى "+moments[0].end+"s" : "");
+      card.append(p);
+    });
+    out.append(card);
+  } catch (e) { $("aiClipsStatus").textContent = "تعذر تحليل المقاطع: " + e.message; }
+  finally { $("analyzeClipsAI").disabled = false; }
+};
