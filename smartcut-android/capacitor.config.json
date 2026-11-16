@@ -1,7 +1,7 @@
 {
   "appId": "com.smartcut.ai",
   "appName": "SmartCut AI",
-  "webDir": "www",
+  "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"
