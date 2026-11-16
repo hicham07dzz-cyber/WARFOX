@@ -36,6 +36,14 @@ wrapAsync(ref, "onchange", async () => {
   $("export").disabled = true;
   showStep(1);
 });
+wrapAsync($("analyzeReferenceAI"), "onclick", async () => {
+  if ($("aiReferenceStatus").textContent.startsWith("اكتمل الفهم الدلالي")) {
+    referenceReady = true;
+    showStep(2);
+    $("clipLabel").textContent = "الآن ارفع المقاطع التي تريد مونتاجها";
+    $("clipAnalysisStatus").textContent = "بعد اختيار مقاطعك اضغط متابعة.";
+  }
+});
 wrapAsync(refBtn, "onclick", async () => {
   referenceReady = $("analysisStatus").textContent.startsWith("اكتمل تحليل المرجع");
   if (referenceReady) {
@@ -61,6 +69,13 @@ continueClips.onclick = () => {
   showStep(3);
   $("clipAnalysisStatus").textContent = "اضغط «تحليل المقاطع» وانتظر حتى ينتهي فحص جميع المقاطع.";
 };
+wrapAsync($("analyzeClipsAI"), "onclick", async () => {
+  if ($("aiClipsStatus").textContent.startsWith("اكتمل فهم")) {
+    analysisReady = true;
+    $("continueToDesign").disabled = false;
+    $("clipAnalysisStatus").textContent = "اكتمل الفهم الدلالي للمقاطع. راجع اللقطات المقترحة ثم تابع.";
+  }
+});
 wrapAsync(clipBtn, "onclick", async () => {
   const status = $("clipAnalysisStatus").textContent;
   const match = status.match(/تم تحليل (\d+) من (\d+) مقاطع/);
