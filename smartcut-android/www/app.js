@@ -1,6 +1,6 @@
 import { FFmpeg } from "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js";
 import { fetchFile, toBlobURL } from "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js";
-const $=id=>document.getElementById(id);let files=[],music=null,engine=null,outUrl=null,durations=[];
+const $=id=>id.startsWith("[")?document.querySelector(id):document.getElementById(id);let files=[],music=null,engine=null,outUrl=null,durations=[];
 const status=s=>$("status").textContent=s;
 const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function getDuration(f){return new Promise(resolve=>{const v=document.createElement("video"),u=URL.createObjectURL(f);v.preload="metadata";v.onloadedmetadata=()=>{const d=v.duration;URL.revokeObjectURL(u);resolve(Number.isFinite(d)?d:0)};v.onerror=()=>{URL.revokeObjectURL(u);resolve(0)};v.src=u})}
