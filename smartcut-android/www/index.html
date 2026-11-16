@@ -1,23 +1,31 @@
 <!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101318"><title>SmartCut AI</title><link rel="stylesheet" href="style.css"></head>
 <body><header><a class="brand">✦ SMARTCUT <span>AI</span></a><span class="tag">استوديو المونتاج الذكي</span></header><main>
-<section class="hero"><p class="eyebrow">SMART VIDEO STUDIO</p><h1>من لقطاتك إلى فيديو جاهز</h1><p>قص مقاطعك، أضف الموسيقى والنص، وصدّر فيديو MP4 مباشرة على هاتفك.</p></section>
-<section class="panel"><h2>1 — ملفاتك</h2><div class="grid">
-<label class="upload"><b>لقطات الفيديو</b><small>اختر عدة مقاطع</small><input id="clips" type="file" accept="video/*" multiple><i id="clipLabel">اختيار الفيديوهات</i></label>
-<label class="upload"><b>موسيقى خلفية</b><small>اختياري</small><input id="music" type="file" accept="audio/*"><i id="musicLabel">اختيار ملف صوتي</i></label></div><div id="clipList"></div></section>
-<section class="panel"><h2>2 — تحليل فعلي للفيديو</h2>
-<label class="upload"><b>الفيديو المرجعي</b><small>حلّل الإيقاع البصري والألوان للمقارنة، لاستخراج أسلوبه رقمياً</small><input id="reference" type="file" accept="video/*"><i id="referenceLabel">اختيار فيديو مرجعي</i></label>
-<div class="actions"><button id="analyzeReference" class="secondary" type="button">تحليل المرجع</button><button id="analyzeClips" type="button">اكتشاف اللقطات</button><button id="autoSelect" type="button">اختيار أفضل اللقطات تلقائياً</button><button id="analyzeBeats" class="secondary" type="button">تحليل إيقاع الموسيقى</button><button id="syncBeats" type="button">مزامنة نهايات القصات مع النبضات</button></div>
-<div id="analysisStatus" class="analysisStatus">التحليل المحلي يقيس الحركة والسطوع والتشبع وتغير المشاهد؛ لا يفهم معنى الأشخاص أو الأحداث.</div><div id="analysisResults"></div>
-<p class="smallNote">هذه خوارزمية تحليل إشارات بصرية وليست نموذج فهم مشاهد. اقتراحات اللقطات احتمالية وتحتاج مراجعتك.</p></section>
-<section class="panel"><h2>3 — إعدادات التصدير</h2><div class="settings">
+<section class="hero"><p class="eyebrow">SMART VIDEO STUDIO</p><h1>مونتاجك يبدأ من المرجع</h1><p>ارفع فيديو الأسلوب الذي تريده، ثم اتبع المراحل حتى تحصل على فيديوك النهائي.</p></section>
+<nav class="workflowSteps" aria-label="مراحل العمل"><span class="active" data-indicator="1">1 المرجع</span><span data-indicator="2">2 مقاطعك</span><span data-indicator="3">3 التحليل</span><span data-indicator="4">4 التصميم</span><span data-indicator="5">5 التصدير</span></nav>
+<section class="panel" id="stepReference" data-step="1"><h2>المرحلة 1 — أرسل فيديو مرجعياً</h2><p class="stepIntro">اختر فيديو المونتاج الذي تريد أن نستخرج أسلوبه. سنحلل حالياً الحركة والإيقاع البصري والسطوع والتشبع محلياً.</p>
+<label class="upload"><b>الفيديو المرجعي</b><small>الفيديو الذي تريد محاكاة أسلوبه</small><input id="reference" type="file" accept="video/*"><i id="referenceLabel">اختيار فيديو مرجعي</i></label>
+<div class="actions"><button id="analyzeReference" type="button">ابدأ تحليل المرجع</button></div>
+<div id="analysisStatus" class="analysisStatus">لم يبدأ التحليل بعد.</div><div id="analysisResults"></div>
+<p class="smallNote">تنبيه: التحليل الحالي يقيس إشارات بصرية ولا يفهم دلالات المشاهد أو الأحداث بعد.</p></section>
+<section class="panel hidden" id="stepClips" data-step="2"><h2>المرحلة 2 — أرسل مقاطعك</h2><p class="stepIntro">انتهى تحليل المرجع. الآن اختر المقاطع التي تريد استخدامها لصنع فيديو جديد بنفس الأسلوب قدر الإمكان.</p>
+<div class="grid"><label class="upload"><b>لقطات الفيديو</b><small>اختر عدة مقاطع</small><input id="clips" type="file" accept="video/*" multiple><i id="clipLabel">اختيار الفيديوهات</i></label>
+<label class="upload"><b>موسيقى خلفية</b><small>اختياري</small><input id="music" type="file" accept="audio/*"><i id="musicLabel">اختيار ملف صوتي</i></label></div><div id="clipList"></div>
+<div class="actions"><button id="continueToAnalysis" type="button" disabled>متابعة إلى تحليل المقاطع</button></div></section>
+<section class="panel hidden" id="stepAnalysis" data-step="3"><h2>المرحلة 3 — تحليل واختيار أفضل اللقطات</h2><p class="stepIntro">يفحص التطبيق مقاطعك ويقترح أفضل الأجزاء حسب الحركة والتغير البصري ومدى قرب ألوانها من المرجع.</p>
+<div class="actions"><button id="analyzeClips" class="secondary" type="button">تحليل المقاطع</button><button id="autoSelect" type="button">اختيار أفضل اللقطات تلقائياً</button><button id="analyzeBeats" class="secondary" type="button">تحليل إيقاع الموسيقى</button><button id="syncBeats" type="button">مزامنة نهايات القصات مع النبضات</button></div>
+<div id="clipAnalysisStatus" class="analysisStatus">ارفع المقاطع أولاً ثم ابدأ التحليل.</div><div id="clipAnalysisResults"></div>
+<p class="smallNote">الاقتراحات احتمالية وتحتاج مراجعتك؛ ليست اكتشافاً دلالياً للأحداث.</p>
+<div class="actions"><button id="continueToDesign" type="button" disabled>اعتماد اللقطات والانتقال للتصميم</button></div></section>
+<section class="panel hidden" id="stepDesign" data-step="4"><h2>المرحلة 4 — إعداد تصميم الفيديو</h2><p class="stepIntro">اضبط المدة والمقاس والانتقالات والصوت. سيتم تطبيق الإعدادات على المقاطع التي اعتمدتها.</p>
+<div class="settings">
 <label>المدة<select id="target"><option>15</option><option selected>30</option><option>45</option><option>60</option></select></label>
 <label>المقاس<select id="ratio"><option value="9:16">عمودي 9:16</option><option value="16:9">أفقي 16:9</option><option value="1:1">مربع 1:1</option></select></label>
 <label>الجودة<select id="quality"><option value="fast">سريع</option><option value="balanced" selected>متوازن</option><option value="high">عالٍ</option></select></label>
 <label>الانتقالات<select id="transition"><option value="none">بدون</option><option value="fade">تلاشي دخول وخروج لكل مقطع</option><option value="crossfade" selected>انتقال متداخل Crossfade</option></select></label><label>نمط الألوان<select id="look"><option value="natural">طبيعي</option><option value="cinematic">سينمائي</option><option value="vivid">حيوي</option><option value="warm">دافئ</option><option value="clean">نظيف</option></select></label>
 <label>صوت الموسيقى<select id="volume"><option value=".1">10%</option><option value=".2" selected>20%</option><option value=".35">35%</option><option value=".5">50%</option></select></label></div>
 <label class="field">نص يظهر على الفيديو<textarea id="caption" rows="2" placeholder="اختياري"></textarea></label>
-<div class="actions"><button id="loadEngine" class="secondary">تحميل محرك التصدير</button><button id="export" disabled>إنشاء MP4</button></div><div id="status">اختر مقطعاً واحداً على الأقل.</div><div class="progress"><div id="progressBar"></div></div></section>
-<section class="panel"><h2>4 — المعاينة</h2><video id="preview" controls playsinline></video><a id="download" class="download hidden">تنزيل MP4</a></section>
-<section class="notice"><b>الميزات غير المفعّلة بعد</b><p>اكتشاف الترندات الحية وفهم محتوى المشاهد وتقليد أسلوب المرجع دلالياً والترجمة التلقائية للكلام ما زالت غير مفعّلة؛ تحتاج مصادر ترند موثوقة ونموذج رؤية ونموذج تعرف على الكلام. أنماط الألوان الحالية فلاتر يدوية وليست ذكاءً اصطناعياً. لم أضع أزراراً وهمية لهذه الوظائف. التحليل أعلاه يعمل محلياً ولا يرفع الفيديو.</p></section>
-</main><footer>SMARTCUT AI · Android Preview</footer><script type="module" src="app.js"></script></body></html>
+<div class="actions"><button id="loadEngine" class="secondary" type="button">تحميل محرك التصدير</button><button id="export" disabled type="button">إنشاء MP4</button></div><div id="status">أكمل المراحل السابقة أولاً.</div><div class="progress"><div id="progressBar"></div></div></section>
+<section class="panel hidden" id="stepPreview" data-step="5"><h2>المرحلة 5 — معاينة النتيجة</h2><p class="stepIntro">شاهد الفيديو الناتج، وإذا أعجبك نزّله على هاتفك.</p><video id="preview" controls playsinline></video><a id="download" class="download hidden">تنزيل MP4</a></section>
+<section class="notice"><b>ما زال قيد التطوير</b><p>الفهم الدلالي الحقيقي للفيديو وتقليد أسلوب المرجع، واكتشاف الترندات الحية، والترجمة التلقائية للكلام لم تُنفّذ بعد. لن نعرضها كميزات مكتملة قبل إضافة محركات حقيقية واختبارها.</p></section>
+</main><footer>SMARTCUT AI · Android Preview</footer><script type="module" src="app.js"></script><script type="module" src="workflow.js"></script></body></html>
