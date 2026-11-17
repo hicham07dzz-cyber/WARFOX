@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">SmartCut AI</title>
+<desc id="desc">An orange precision-cut S mark with a play symbol on a deep charcoal background.</desc>
+<defs>
+  <linearGradient id="cut" x1="112" y1="95" x2="396" y2="410" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFD18A"/>
+    <stop offset=".48" stop-color="#FF874A"/>
+    <stop offset="1" stop-color="#F04D35"/>
+  </linearGradient>
+  <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="matrix(0 290 -290 0 256 90)" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FF874A" stop-opacity=".18"/>
+    <stop offset="1" stop-color="#FF874A" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="shadow" x="60" y="50" width="392" height="412" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+    <feGaussianBlur stdDeviation="13"/>
+  </filter>
+</defs>
+<rect x="16" y="16" width="480" height="480" rx="116" fill="#0B0E13"/>
+<rect x="16" y="16" width="480" height="480" rx="116" fill="url(#glow)"/>
+<rect x="17.5" y="17.5" width="477" height="477" rx="114.5" stroke="#35404D" stroke-width="3"/>
+<path d="M354 145C324 111 281 94 232 101C166 111 122 151 122 207C122 258 160 281 229 299L275 311C315 322 339 340 339 373C339 414 303 438 251 438C199 438 155 416 123 380" stroke="url(#cut)" stroke-width="39" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#shadow)" opacity=".5"/>
+<path d="M354 145C324 111 281 94 232 101C166 111 122 151 122 207C122 258 160 281 229 299L275 311C315 322 339 340 339 373C339 414 303 438 251 438C199 438 155 416 123 380" stroke="url(#cut)" stroke-width="39" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="M226 204L316 256L226 308V204Z" fill="#F8F8F5" stroke="#0B0E13" stroke-width="9" stroke-linejoin="round"/>
+<path d="M103 126H143M369 386H409" stroke="#6E7B89" stroke-width="9" stroke-linecap="round" opacity=".8"/>
+<circle cx="103" cy="126" r="8" fill="#FFB36B"/>
+<circle cx="409" cy="386" r="8" fill="#FF6F43"/>
+</svg>
