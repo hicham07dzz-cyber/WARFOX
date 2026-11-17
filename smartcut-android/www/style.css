@@ -24,3 +24,25 @@ main{padding:0 0 50px}.hero{display:flex;align-items:center;justify-content:spac
 .ai-connection>span{color:#ffad70}
 .field input{font-family:inherit}
 .actions a{display:flex;align-items:center;justify-content:center;padding:12px;border:1px solid #394757;border-radius:10px;color:#ffc18d;text-decoration:none;font-size:11px}
+
+/* Online trend discovery */
+.trend-hub{margin:0 0 22px;padding:16px;border:1px solid #3a4655;border-radius:14px;background:linear-gradient(145deg,#171f2a,#11171f)}
+.trend-hub-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.trend-hub h4{font-size:15px;margin:5px 0}.trend-hub p{font-size:10px;color:#9eabb9;margin:0;line-height:1.7}
+.trend-live{font-size:8px;letter-spacing:1px;color:#a9d8c1;border:1px solid #365d4e;border-radius:20px;padding:6px 9px;white-space:nowrap}
+.trend-tools{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;margin-top:14px}
+.trend-tools label{font-size:10px;color:#bdc8d4}.trend-tools input,.trend-tools select{margin-top:5px}
+.trend-actions{margin-top:12px}.trend-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:13px}
+.trend-links a{font-size:10px;color:#ffc18d;text-decoration:none}
+.trend-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:12px}
+.trend-card{min-width:0;border:1px solid #344252;background:#0e141b;border-radius:11px;overflow:hidden}
+.trend-card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#080b0f}
+.trend-card-content{padding:10px}.trend-card b{display:block;font-size:11px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.trend-card small{display:block;color:#8e9cac;font-size:9px;margin-top:5px}
+.trend-card a{display:inline-block;color:#ffc18d;font-size:10px;margin-top:8px;text-decoration:none}
+.trend-plan{margin-top:14px;padding:14px;border:1px solid #48596c;border-radius:12px;background:#121a23}
+.trend-plan h4{margin:0 0 10px;font-size:14px}
+.plan-shot{display:grid;grid-template-columns:60px 1fr;gap:10px;padding:9px 0;border-top:1px solid #2a3643}
+.plan-time{font:700 11px ui-monospace,monospace;color:#ffb47c}
+.plan-shot b{font-size:11px}.plan-shot p{font-size:10px;color:#aab6c3;margin:3px 0;line-height:1.5}
+@media(max-width:620px){.trend-tools,.trend-results{grid-template-columns:1fr}.trend-hub{padding:13px}.trend-card-content{padding:8px}}
