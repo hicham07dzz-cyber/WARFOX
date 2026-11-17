@@ -41,6 +41,9 @@ jobs:
       - name: Generate Android project
         working-directory: smartcut-android
         run: npx cap add android
+      - name: Generate branded Android app icon and splash
+        working-directory: smartcut-android
+        run: npx capacitor-assets generate --android --iconBackgroundColor "#0b0e13" --splashBackgroundColor "#0b0e13"
       - name: Sync web assets
         working-directory: smartcut-android
         run: npx cap sync android
