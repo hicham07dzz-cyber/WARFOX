@@ -32,6 +32,18 @@
   <section class="step-heading"><div><div class="eyebrow">SMART WORKFLOW / 01—05</div><h2>استوديو المونتاج</h2><p>كل مرحلة تفتح بعد اكتمال المرحلة السابقة.</p></div><div class="step-counter"><b>01</b><small>/ 05</small></div></section>
   <section class="panel" id="stepReference" data-step="1">
    <div class="panel-head"><div><span class="step-kicker">STEP 01 · REFERENCE</span><h3>ابدأ بالفيديو المرجعي</h3><p class="stepIntro">اختر الفيديو الذي يعجبك أسلوب مونتاجه. سنفحص الإيقاع والسطوع والتشبّع والتغيّر البصري.</p></div><div class="panel-icon">◫</div></div>
+   <section class="trend-hub" aria-labelledby="trendHubTitle">
+    <div class="trend-hub-head"><div><span class="step-kicker">LIVE INSPIRATION · ONLINE</span><h4 id="trendHubTitle">اكتشف الترندات قبل المونتاج</h4><p>اعرض فيديوهات YouTube الشائعة في بلدك، أو افتح مركز TikTok الرسمي. لا نعرض ترتيباً أو أرقاماً غير موثقة.</p></div><span class="trend-live">ONLINE SOURCES</span></div>
+    <div class="trend-tools">
+     <label>البلد<select id="trendRegion"><option value="DZ" selected>الجزائر</option><option value="US">الولايات المتحدة</option><option value="FR">فرنسا</option><option value="GB">بريطانيا</option><option value="SA">السعودية</option><option value="AE">الإمارات</option></select></label>
+     <label>مفتاح YouTube Data API<input id="youtubeApiKey" type="password" autocomplete="off" placeholder="اختياري — يُحفظ على جهازك فقط"></label>
+    </div>
+    <div class="actions trend-actions"><button id="loadTrends" type="button">جلب فيديوهات YouTube الرائجة</button><button id="saveYoutubeKey" class="secondary" type="button">حفظ المفتاح</button></div>
+    <div class="trend-links"><a href="https://ads.tiktok.com/creative/creativeCenter/trends" target="_blank" rel="noopener">فتح ترندات TikTok الرسمية ↗</a><a href="https://trends.google.com/trends/" target="_blank" rel="noopener">Google Trends ↗</a></div>
+    <div id="trendStatus" class="analysisStatus">أدخل مفتاح YouTube API لجلب الفيديوهات داخل التطبيق، أو افتح مصادر الترند الرسمية.</div>
+    <div id="trendResults" class="trend-results"></div>
+    <p class="smallNote">ملاحظة: الفيديوهات المعروضة إلهام مرجعي فقط. اختر فيديو تملك حق استخدامه أو لديك إذن به، ثم ارفعه أدناه لتحليل اللقطات والتوقيت بدقة أكبر.</p>
+   </section>
    <label class="upload dropzone"><span class="drop-icon">↥</span><b>أفلت الفيديو هنا أو اختره</b><small>MP4 · MOV · WEBM — ملف فيديو واحد</small><input id="reference" type="file" accept="video/*"><i id="referenceLabel">لم يتم اختيار فيديو</i></label>
    <div class="engine-note ai-connection">
     <span>✦</span><div><b>محرك الفهم الذكي عبر الإنترنت</b><small>مفتاح Gemini واتصال إنترنت مطلوبان للتحليل الدلالي وفتح المراحل التالية. القياسات المحلية وحدها لا تكفي. يرسل التطبيق إطارات مختارة من الفيديو إلى Google عند تشغيل التحليل. لا ترسل مقاطع خاصة أو حساسة؛ قد تُستخدم بيانات المستوى المجاني لتحسين خدمات Google وفق سياسة الخدمة.</small></div>
