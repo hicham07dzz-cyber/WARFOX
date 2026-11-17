@@ -57,7 +57,7 @@ export async function analyzeVideoWithGemini(file, apiKey, mode = "reference") {
   if (!apiKey) throw new Error("أدخل مفتاح Gemini أولاً");
   const { duration, frames } = await sampleFrames(file, mode === "reference" ? 10 : 8);
   const instruction = mode === "reference"
-    ? "حلل أسلوب المونتاج في الفيديو المرجعي: نوع المشاهد، الألوان، الإضاءة، إيقاع القطع التقريبي، التكوين، الحركة، النصوص الظاهرة، الانتقالات التي يمكن استنتاجها من الإطارات. لا تدّع معرفة الموسيقى أو الانتقالات غير المرئية. أعد JSON فقط بمفاتيح: summary, genre, color_style, pacing, camera_and_motion, editing_recipe (array), overlay_ideas (array), confidence."
+    ? "حلل أسلوب المونتاج في الفيديو المرجعي من الإطارات المعروضة فقط. لا تدّع معرفة الصوت أو الانتقالات غير المرئية. أعد JSON فقط بمفاتيح: summary, genre, color_style, pacing, camera_and_motion, editing_recipe (array), overlay_ideas (array), confidence, visual_recipe. اجعل visual_recipe كائناً قابلاً للتطبيق يحتوي brightness_adjustment رقم بين -0.12 و0.12، contrast رقم بين 0.85 و1.25، saturation رقم بين 0.7 و1.3، look إحدى القيم natural/cinematic/vivid/warm/clean، transition إحدى القيم cut/fade/crossfade. اختر القيم لتقريب مظهر المرجع ولا تخترع خصائص غير واضحة."
     : "افهم محتوى هذا المقطع بصرياً. حدّد الأحداث المهمة فعلياً، واذكر أوقاتاً تقريبية بالثواني ضمن مدة الفيديو. لا تخترع أحداثاً غير ظاهرة. أعد JSON فقط بمفاتيح: summary, scenes (array of objects with start, end, description, importance 1-5, reason), best_moments (array of objects with start, end, reason), suggested_caption, confidence.";
   const parts = [{ text: instruction + "\nمدة الفيديو: " + duration.toFixed(2) + " ثانية. كل صورة تحمل توقيتها بالثواني." }];
   for (const frame of frames) {
