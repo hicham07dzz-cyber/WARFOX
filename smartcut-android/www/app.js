@@ -54,7 +54,27 @@ $("analyzeReferenceAI").onclick = async () => {
     const summary = document.createElement("p"); summary.textContent = data.result.summary || ""; box.append(summary);
     const recipe = document.createElement("ul");
     (data.result.editing_recipe || []).forEach(item => { const li=document.createElement("li"); li.textContent=String(item); recipe.append(li); });
-    box.append(recipe); $("analysisResults").append(box);
+    box.append(recipe);
+    const plan = Array.isArray(data.result.edit_plan) ? data.result.edit_plan : [];
+    if (plan.length) {
+      const planBox = document.createElement("div"); planBox.className = "trend-plan";
+      const planTitle = document.createElement("h4"); planTitle.textContent = "خريطة تنفيذ الترند — لقطاتك المطلوبة"; planBox.append(planTitle);
+      plan.forEach((shot, index) => {
+        const row = document.createElement("div"); row.className = "plan-shot";
+        const time = document.createElement("div"); time.className = "plan-time";
+        const start = Number(shot.start_sec), end = Number(shot.end_sec);
+        time.textContent = Number.isFinite(start) && Number.isFinite(end) ? start.toFixed(1) + "–" + end.toFixed(1) + "s" : (Number(shot.duration_sec)||0).toFixed(1) + "s";
+        const body = document.createElement("div");
+        const title = document.createElement("b"); title.textContent = "لقطة " + (index + 1) + " · " + (Number(shot.duration_sec)||Math.max(0,end-start)).toFixed(1) + " ثانية"; body.append(title);
+        const desc = document.createElement("p"); desc.textContent = shot.visual_description || "وصف بصري غير متوفر"; body.append(desc);
+        const request = document.createElement("p"); request.textContent = "المطلوب منك: " + (shot.footage_request || "لقطة مشابهة بصرياً"); body.append(request);
+        const edit = document.createElement("p"); edit.textContent = "الانتقال: " + (shot.transition_to_next || "قص مباشر") + " · المؤثر: " + (shot.effect || "غير محدد") + (shot.overlay_text ? " · النص: " + shot.overlay_text : ""); body.append(edit);
+        row.append(time, body); planBox.append(row);
+      });
+      const note = document.createElement("p"); note.textContent = "الأزمنة خطة تقريبية مستخرجة من عينات الإطارات، وليست قياساً مؤكداً لكل نقطة قطع أو إيقاع موسيقي."; planBox.append(note);
+      box.append(planBox);
+    }
+    $("analysisResults").append(box);
   } catch (e) { $("aiReferenceStatus").textContent = "تعذر تحليل Gemini: " + e.message; }
   finally { $("analyzeReferenceAI").disabled = false; }
 };
@@ -80,3 +100,54 @@ $("analyzeClipsAI").onclick = async () => {
   } catch (e) { $("aiClipsStatus").textContent = "تعذر تحليل المقاطع: " + e.message; }
   finally { $("analyzeClipsAI").disabled = false; }
 };
+
+
+// Live trend discovery: YouTube Data API (official) + official external trend sources.
+const YT_KEY_SLOT = "smartcut_youtube_data_api_key";
+const ytKeyInput = $("youtubeApiKey");
+if (ytKeyInput) ytKeyInput.value = localStorage.getItem(YT_KEY_SLOT) || "";
+$("saveYoutubeKey")?.addEventListener("click", () => {
+  const key = String(ytKeyInput?.value || "").trim();
+  if (key) localStorage.setItem(YT_KEY_SLOT, key);
+  else localStorage.removeItem(YT_KEY_SLOT);
+  $("trendStatus").textContent = key ? "تم حفظ مفتاح YouTube API على هذا الجهاز." : "تم مسح المفتاح المحفوظ.";
+});
+$("loadTrends")?.addEventListener("click", async () => {
+  const key = String(ytKeyInput?.value || localStorage.getItem(YT_KEY_SLOT) || "").trim();
+  if (!key) {
+    $("trendStatus").textContent = "لجلب الفيديوهات هنا يلزم مفتاح YouTube Data API. يمكنك حالياً فتح مركز TikTok أو Google Trends من الروابط أعلاه.";
+    return;
+  }
+  const region = $("trendRegion")?.value || "DZ";
+  const results = $("trendResults"); results.replaceChildren();
+  $("loadTrends").disabled = true;
+  $("trendStatus").textContent = "جارٍ جلب الفيديوهات الأكثر شعبية من YouTube للمنطقة المحددة...";
+  try {
+    const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+    url.search = new URLSearchParams({part:"snippet,statistics,contentDetails",chart:"mostPopular",regionCode:region,maxResults:"12",key});
+    const response = await fetch(url.toString());
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || "YouTube API error " + response.status);
+    const items = Array.isArray(data.items) ? data.items : [];
+    if (!items.length) throw new Error("لم تُرجع YouTube فيديوهات لهذه المنطقة حالياً.");
+    items.forEach(item => {
+      const card = document.createElement("article"); card.className = "trend-card";
+      const image = document.createElement("img"); image.loading = "lazy"; image.alt = "صورة مصغرة للفيديو";
+      image.src = item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "";
+      const content = document.createElement("div"); content.className = "trend-card-content";
+      const title = document.createElement("b"); title.textContent = item.snippet?.title || "فيديو رائج";
+      const meta = document.createElement("small"); meta.textContent = (item.snippet?.channelTitle || "") + " · " + Number(item.statistics?.viewCount || 0).toLocaleString() + " مشاهدة";
+      const watch = document.createElement("a"); watch.href = "https://www.youtube.com/watch?v=" + encodeURIComponent(item.id); watch.target = "_blank"; watch.rel = "noopener"; watch.textContent = "مشاهدة الفيديو ↗";
+      const choose = document.createElement("button"); choose.type = "button"; choose.className = "applySuggestion"; choose.textContent = "اختيار هذا الترند";
+      choose.addEventListener("click", () => {
+        window.smartcutSelectedTrend = { id:item.id, title:item.snippet?.title || "", channel:item.snippet?.channelTitle || "", url:watch.href, region };
+        $("trendStatus").textContent = "تم اختيار: " + window.smartcutSelectedTrend.title + ". شاهد الفيديو وارفع نسخة مرجعية تملك حق استخدامها في خانة الفيديو المرجعي لتحليل التوقيت والانتقالات.";
+        document.querySelector("#stepReference .upload")?.scrollIntoView({behavior:"smooth",block:"center"});
+      });
+      content.append(title,meta,watch,choose); card.append(image,content); results.append(card);
+    });
+    $("trendStatus").textContent = "تم جلب " + items.length + " فيديوهات شائعة من YouTube · المنطقة: " + region + ". هذه قائمة شعبية عامة وليست حكماً بأنها ترند مونتاج.";
+  } catch (error) {
+    $("trendStatus").textContent = "تعذر جلب الترندات: " + error.message + ". تحقق من المفتاح وتفعيل YouTube Data API وحدود الاستخدام.";
+  } finally { $("loadTrends").disabled = false; }
+});
