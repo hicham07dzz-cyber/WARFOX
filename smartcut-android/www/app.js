@@ -45,9 +45,9 @@ $("analyzeReferenceAI").onclick = async () => {
     $("aiReferenceStatus").textContent = "يرسل التطبيق عينات إطارات إلى Gemini لفهم الأسلوب...";
     const data = await analyzeVideoWithGemini(referenceFile, getAIKey(), "reference");
     window.smartcutReferenceAI = data.result;
-    const recipe = data.result.visual_recipe || {};
-    if (["natural","cinematic","vivid","warm","clean"].includes(recipe.look)) $("look").value = recipe.look;
-    if (["cut","fade","crossfade"].includes(recipe.transition)) $("transition").value = recipe.transition === "cut" ? "none" : recipe.transition;
+    const visualRecipe = data.result.visual_recipe || {};
+    if (["natural","cinematic","vivid","warm","clean"].includes(visualRecipe.look)) $("look").value = visualRecipe.look;
+    if (["cut","fade","crossfade"].includes(visualRecipe.transition)) $("transition").value = visualRecipe.transition === "cut" ? "none" : visualRecipe.transition;
     $("aiReferenceStatus").textContent = "اكتمل الفهم الدلالي للمرجع (" + data.sampledFrames + " إطارات).";
     const box = document.createElement("div"); box.className = "analysisCard";
     const heading = document.createElement("b"); heading.textContent = data.result.genre || "تحليل أسلوب المرجع"; box.append(heading);
